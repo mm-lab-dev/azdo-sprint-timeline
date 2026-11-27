@@ -1,0 +1,13 @@
+node_modules/
+.cache/
+.angular/
+dist/
+artifacts/
+coverage/
+test-results/
+playwright-report/
+*.vsix
+.env
+.env.*
+!.env.example
+npm-debug.log*

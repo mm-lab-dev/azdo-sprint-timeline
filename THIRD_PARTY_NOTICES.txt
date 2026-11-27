@@ -1,0 +1,15 @@
+Third-party runtime notices for azdo-sprint-timeline
+
+The production build contains third-party open-source dependencies, including
+Angular, RxJS, PrimeNG, PrimeUIX themes, tslib, and the Azure DevOps extension
+SDK/API packages. Their licenses remain with their respective authors.
+
+Angular's build process extracts bundled license notices to:
+  dist/azdo-sprint-timeline/3rdpartylicenses.txt
+
+That generated file is included in every VSIX alongside this notice and the
+project's MIT license. Consult it for the bundled copyright and license text.
+Dependency names and exact versions are recorded in package-lock.json.
+
+The icon is an original SVG in resources/icon.svg, rendered to resources/icon.png.
+README screenshots are generated from the repository's synthetic mock data.

@@ -1,0 +1,67 @@
+{
+  "manifestVersion": 1,
+  "id": "azdo-sprint-timeline",
+  "publisher": "mm-lab",
+  "version": "0.1.0",
+  "name": "Sprint Timeline",
+  "description": "Read-only Sprint timeline aggregated from child Tasks, User Stories and Features.",
+  "public": true,
+  "icons": { "default": "resources/icon.png" },
+  "tags": ["sprint", "timeline", "planning", "agile", "work items"],
+  "content": {
+    "details": { "path": "README.md" },
+    "license": { "path": "LICENSE" }
+  },
+  "repository": {
+    "type": "git",
+    "uri": "https://github.com/mm-lab-dev/azdo-sprint-timeline"
+  },
+  "links": {
+    "getstarted": {
+      "uri": "https://github.com/mm-lab-dev/azdo-sprint-timeline#install-and-open"
+    },
+    "support": {
+      "uri": "https://github.com/mm-lab-dev/azdo-sprint-timeline/issues"
+    }
+  },
+  "screenshots": [
+    { "path": "resources/readme/overview.png" },
+    { "path": "resources/readme/dark.png" }
+  ],
+  "branding": { "color": "#19283f", "theme": "dark" },
+  "categories": ["Azure Boards"],
+  "targets": [{ "id": "Microsoft.VisualStudio.Services" }],
+  "scopes": ["vso.work", "vso.project"],
+  "files": [
+    { "path": "resources/icon.png", "addressable": true },
+    { "path": "resources/readme", "addressable": true },
+    { "path": "README.md", "addressable": true },
+    { "path": "LICENSE", "addressable": true },
+    { "path": "SUPPORT.md", "addressable": true },
+    { "path": "CHANGELOG.md", "addressable": true },
+    { "path": "TESTING.md", "addressable": true },
+    { "path": "PUBLISHING.md", "addressable": true },
+    { "path": "THIRD_PARTY_NOTICES.txt", "addressable": true },
+    { "path": "docs/development.md", "addressable": true },
+    { "path": "docs/acceptance.md", "addressable": true },
+    { "path": "docs/decisions.md", "addressable": true },
+    { "path": "docs/implementation-plan.md", "addressable": true },
+    { "path": "docs/manual-smoke.md", "addressable": true },
+    {
+      "path": "dist/azdo-sprint-timeline/3rdpartylicenses.txt",
+      "addressable": false
+    },
+    { "path": "dist/azdo-sprint-timeline/browser", "addressable": true }
+  ],
+  "contributions": [
+    {
+      "id": "azdo-sprint-timeline-hub",
+      "type": "ms.vss-web.hub",
+      "targets": ["ms.vss-work-web.work-hub-group"],
+      "properties": {
+        "name": "Sprint Timeline",
+        "uri": "dist/azdo-sprint-timeline/browser/index.html"
+      }
+    }
+  ]
+}
