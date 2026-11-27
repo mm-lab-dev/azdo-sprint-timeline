@@ -26,7 +26,7 @@ Select a bar or item ID to open the Work Item form in Azure DevOps. The interfac
 
 ## Install and open
 
-This extension is being prepared for its first release and is not yet published. Its extension ID is `azdo-sprint-timeline`; its display name is **Sprint Timeline**.
+The extension ID is `azdo-sprint-timeline`; its display name is **Sprint Timeline**. See the [Changelog](CHANGELOG.md) for updates.
 
 After the public Marketplace listing is available, search for **Sprint Timeline** under Azure DevOps extensions and have an authorized organization administrator install it. Open an Agile project and choose **Boards → Sprint Timeline**. See [Publishing](PUBLISHING.md) for release preparation and the remaining verification steps.
 

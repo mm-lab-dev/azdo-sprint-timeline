@@ -2,7 +2,7 @@
   "manifestVersion": 1,
   "id": "azdo-sprint-timeline",
   "publisher": "mm-lab",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "name": "Sprint Timeline",
   "description": "Read-only Sprint timeline aggregated from child Tasks, User Stories and Features.",
   "public": true,

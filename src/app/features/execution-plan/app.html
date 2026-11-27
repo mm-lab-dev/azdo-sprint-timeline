@@ -11,10 +11,13 @@
     <label
       >Team<select
         aria-label="Team"
+        [disabled]="!teams().length"
         [ngModel]="teamId()"
         (ngModelChange)="changeTeam($event)"
       >
-        @for (team of teams(); track team.id) {
+        @if (!teams().length) {
+        <option value="">チーム未取得</option>
+        } @for (team of teams(); track team.id) {
         <option [value]="team.id">{{ team.name }}</option>
         }
       </select></label
@@ -123,6 +126,13 @@
   <div class="state-panel error" role="alert">
     <p>{{ error() }}</p>
     <button (click)="retry()">再試行</button>
+  </div>
+  } @else if (!teams().length) {
+  <div class="state-panel" role="status">
+    <p>
+      チーム一覧が0件でした。プロジェクトとチームの参照権限を確認し、再取得してください。
+    </p>
+    <button (click)="initialize()">チーム一覧を再取得</button>
   </div>
   } @else { @if (warnings().length) {
   <aside class="warning" role="status">

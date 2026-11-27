@@ -29,11 +29,15 @@ export const MOCK_MODE = new InjectionToken<boolean>("mock");
 export function errorMessage(error: unknown): string {
   const e = error as { status?: number; statusCode?: number };
   const status = e?.status ?? e?.statusCode;
-  return status === 403 || status === 401
-    ? "権限不足: このチームまたはWork Itemを参照できません。"
-    : status === 429
-      ? "アクセス集中: 時間をおいて再試行してください。"
-      : "通信エラー: 接続を確認して再試行してください。";
+  const message =
+    status === 403 || status === 401
+      ? "権限不足: このチームまたはWork Itemを参照できません。"
+      : status === 429
+        ? "アクセス集中: 時間をおいて再試行してください。"
+        : "通信エラー: 接続を確認して再試行してください。";
+  return typeof status === "number" && status > 0
+    ? `${message}（HTTP ${status}）`
+    : message;
 }
 @Component({
   selector: "app-root",
@@ -113,12 +117,13 @@ export class App {
       this.teams.set(teams);
       if (teams.length) await this.changeTeam(this.teamId() || teams[0].id);
       else {
+        this.teamId.set("");
         this.sprints.set([]);
         this.loading.set(false);
       }
     } catch (e) {
       if (version === this.generation) {
-        this.error.set(errorMessage(e));
+        this.error.set("チーム一覧: " + errorMessage(e));
         this.loading.set(false);
       }
     }
@@ -144,7 +149,7 @@ export class App {
       await this.refresh();
     } catch (e) {
       if (version === this.generation) {
-        this.error.set(errorMessage(e));
+        this.error.set("Sprint・Area設定: " + errorMessage(e));
         this.loading.set(false);
       }
     }
@@ -156,6 +161,10 @@ export class App {
     await this.refresh();
   }
   async refresh() {
+    if (!this.teams().length) {
+      await this.initialize();
+      return;
+    }
     const version = ++this.generation;
     this.error.set("");
     this.notice.set("");

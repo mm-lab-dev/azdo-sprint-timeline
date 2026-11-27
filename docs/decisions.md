@@ -1,5 +1,7 @@
 # 決定記録
 
+- 0.1.1: ブラウザーの標準fetchはクライアントオブジェクトをthisとして呼び出すと`Illegal invocation`になるため、`globalThis.fetch`を呼ぶラッパーで保持する。Node/モックのみでは検出できなかったため、実SDKのiframe起動から標準fetch・Team選択まで通すE2Eを追加。チーム一覧0件はWork Itemの空結果と区別し、更新で一覧取得から再試行する。
+
 - 公開用構成は`3mf-gcode-preview`を参考に、画像付きREADME・CHANGELOG・SUPPORT・TESTING・PUBLISHING・MITライセンス・第三者表記へ分離。拡張ID/npm名/Angularプロジェクト名/配布パスはユーザー指定の`azdo-sprint-timeline`に統一。表示名はユーザー指定のSprint Timelineに更新。
 - publisherは`mm-lab`、リポジトリは`mm-lab-dev/azdo-sprint-timeline`をユーザー確認済みの設定として反映。指定されたGitHubリポジトリをoriginに設定。初版企画書は名称・拡張IDのみ更新し、機能仕様は維持する。
 - 配布方式は一般公開。manifestの`public:true`は公開用パッケージの設定であり、アップロード・公開操作は未実施。配布先組織の指定・固有の組織名・ローカル絶対パスをソースや配布物に含めない。

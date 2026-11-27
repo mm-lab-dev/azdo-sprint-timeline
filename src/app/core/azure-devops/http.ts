@@ -26,7 +26,8 @@ export class ReadOnlyHttp {
   constructor(
     private base: string,
     private token: () => Promise<string>,
-    private fetcher: typeof fetch = fetch,
+    private fetcher: typeof fetch = (input, init) =>
+      globalThis.fetch(input, init),
     private sleep = delay,
   ) {}
   async request<T>(path: string, body?: unknown): Promise<T> {
