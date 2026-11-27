@@ -33,7 +33,7 @@ REST取得は7.1の実JSON応答形（配列のcount/valueラップを含む）�
 - Chromiumの1000行全展開・検索: 各約0.3秒。DOMの仮想化は未導入。ハードウェア・ブラウザー・負荷により変動します。
 - 正確な測定値は`artifacts/performance-domain.json`と`artifacts/performance-ui.json`。
 - ライト/ダーク画面: `artifacts/mock-light.png`、`artifacts/mock-dark.png`。画像を目視確認。
-- VSIX: `artifacts/mm-lab.azdo-sprint-timeline-0.2.0.vsix`。tfx-cliで生成。表示名はSprint Timeline、publisherは`mm-lab`、一般公開用`public:true`。配布先組織の指定なし。Marketplaceへのアップロード・公開は未実施。
+- VSIX: `artifacts/mm-lab.azdo-sprint-timeline-0.2.1.vsix`。0.2.0と同じ実装を新しい版数で再生成。表示名はSprint Timeline、publisherは`mm-lab`、一般公開用`public:true`。配布先組織の指定なし。今回の作業ではMarketplaceへのアップロード・公開は行っていません。
 - VSIXには配布用dist、掲載用README・画像・関連文書、MITライセンス・第三者表記、拡張manifestを含めます。node_modules・テストコード・トークンは含めません。
 
 ## 残る検証と制限

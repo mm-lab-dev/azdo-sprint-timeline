@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.1
+
+- Repackage 0.2.0 with a new version for Marketplace upload; application behavior is unchanged.
+
 ## 0.2.0
 
 - Choose multiple work item types, including Epic, and skip hidden levels in the tree.
