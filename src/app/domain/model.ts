@@ -28,7 +28,13 @@ export interface Item {
   remainingWork?: number;
   originalEstimate?: number;
 }
-export const workItemTypes = ["Epic", "Feature", "User Story", "Task"] as const;
+export const workItemTypes = [
+  "Epic",
+  "Feature",
+  "User Story",
+  "Bug",
+  "Task",
+] as const;
 export type WorkItemType = (typeof workItemTypes)[number];
 export interface PlanOptions {
   includeEpics?: boolean;

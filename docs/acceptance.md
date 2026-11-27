@@ -1,6 +1,6 @@
 # 実装結果・受け入れ確認
 
-検証日: 2026-11-27。0.1.0の実組織インストール後にTeamが空になる報告を受け、ブラウザー標準fetchの呼び出し不具合をローカルで再現・修正。修正後、利用者から実組織でのTeam選択・タイムライン表示の成功報告あり。0.2.0の全項目の実組織スモークは未実施です。
+検証日: 2026-11-27。0.1.0の実組織インストール後にTeamが空になる報告を受け、ブラウザー標準fetchの呼び出し不具合をローカルで再現・修正。修正後、利用者から実組織でのTeam選択・タイムライン表示の成功報告あり。0.3.0の全項目の実組織スモークは未実施です。
 
 ## 自動検証
 
@@ -23,22 +23,28 @@
 
 US自身が未計画の場合も、子Taskだけから実行期間を算出する単体ケースを含めています。Taskを取得・集約するためにUS自身のIterationを起点条件に要求しません。
 
-実行コマンド: `npm test -- --coverage`（46件）、`npm run test:e2e`（23件）、`npm run lint`、`npm run format:check`、`npm run package:vsix`。最終実行結果は全て成功。Angular strictTemplates/TypeScript strictでビルドしています。
+実行コマンド: `npm test -- --coverage`（48件）、`npm run test:e2e`（25件）、`npm run lint`、`npm run format:check`、`npm run package:vsix`。最終実行結果は全て成功。Angular strictTemplates/TypeScript strictでビルドしています。
 
 REST取得は7.1の実JSON応答形（配列のcount/valueラップを含む）をHTTP層からrepositoryまで通すテストで検証しています。これは実組織への接続成功を示すものではありません。
 
 ## 性能・画面・パッケージ
 
-- 10Sprint/1000行、集約＋可視行変換を20回実測: 平均約4ms。
-- Chromiumの1000行全展開・検索: 各約0.3秒。DOMの仮想化は未導入。ハードウェア・ブラウザー・負荷により変動します。
+- 10Sprint/1000行、集約＋可視行変換を20回実測: 平均約6ms。
+- Chromiumの1000行全展開・検索: 各約0.5秒。DOMの仮想化は未導入。ハードウェア・ブラウザー・負荷により変動します。
 - 正確な測定値は`artifacts/performance-domain.json`と`artifacts/performance-ui.json`。
 - ライト/ダーク画面: `artifacts/mock-light.png`、`artifacts/mock-dark.png`。画像を目視確認。
-- VSIX: `artifacts/mm-lab.azdo-sprint-timeline-0.2.2.vsix`。Marketplaceの検証ログに基づき、同梱アバターをSVGからPNGへ変更して再生成。表示名はSprint Timeline、publisherは`mm-lab`、一般公開用`public:true`。配布先組織の指定なし。今回の作業ではMarketplaceへのアップロード・公開は行っていません。
+- VSIX: `artifacts/mm-lab.azdo-sprint-timeline-0.3.0.vsix`。Bug対応と画面刷新を含み、同梱画像はPNG。表示名はSprint Timeline、publisherは`mm-lab`、一般公開用`public:true`。配布先組織の指定なし。今回の作業ではMarketplaceへのアップロード・公開は行っていません。
 - VSIXには配布用dist、掲載用README・画像・関連文書、MITライセンス・第三者表記、拡張manifestを含めます。node_modules・テストコード・トークンは含めません。
 
 ## 残る検証と制限
 
 1. A14は[手動スモーク手順](manual-smoke.md)に従い、利用者のpublisher・権限のあるテスト組織で確認が必要です。ローカル成功を実組織成功として扱っていません。
-2. 対象はAgile標準Epic/Feature/US/Task、単一プロジェクト・単一チーム。カスタムタイプは祖先として保持して警告しますが、起点にはしません。
+2. 対象はAgile標準Epic/Feature/US/Bug/Task、単一プロジェクト・単一チーム。カスタムタイプは祖先として保持して警告しますが、起点にはしません。
 3. 範囲外の子Taskは取得・集約しません。表示は選択範囲の実行計画です。
 4. publisherはユーザー指定の`mm-lab`です。公開先組織は指定しません。今回の作業ではアップロード・公開は行いません。
+
+## 0.3.0の追加確認
+
+- BugをWIQLの起点に含め、未計画Bugも子Taskから保持。Feature → Bug → Taskを警告なく集約し、階層の省略・同種同タイトルの統合・フォーム遷移を単体/E2Eで確認。
+- 未割当をバーのアイコン数から除外し、未割当フィルターは維持。進捗の数値・塗り・ツールチップがTask以外に出ないことをE2Eで確認。
+- ライト/ダークの掲載画像をモックデータで更新し、目視確認。狭い画面でも横軸は等幅Sprintのまま、チャート内で横スクロールする。

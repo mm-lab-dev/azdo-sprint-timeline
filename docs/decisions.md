@@ -32,3 +32,10 @@
 - [Area設定](https://learn.microsoft.com/en-us/rest/api/azure/devops/work/teamfieldvalues/get?view=azure-devops-rest-7.1)
 - [最大200件・Omit・Relations](https://learn.microsoft.com/en-us/rest/api/azure/devops/wit/work-items/get-work-items-batch?view=azure-devops-rest-7.1)
 - [WIQL](https://learn.microsoft.com/en-us/azure/devops/boards/queries/wiql-syntax?view=azure-devops)
+
+## 追加の表示調整
+
+- バーの担当者画像は割当済みの項目だけに表示する。未割当はフィルター・ツールチップでは引き続き選択・確認できる。統合行でも未割当を人数に数えない。
+- 完了率の数値・塗り・ツールチップはTaskだけに表示する。Epic・Feature・US・Bugの工数集約値は内部で保持するが、進捗表示には使わない。
+- BugはUSと同じ扱いとし、Feature → Bug → Taskを通常の階層に追加する。Bug自身の有効Sprintと子TaskのSprintを集約し、未計画Bugも子Taskを起点に保持する。既定の表示種類にもBugを含める。
+- [公式のBug表示設定](https://learn.microsoft.com/en-us/azure/devops/organizations/settings/show-bugs-on-backlog)には要件・Taskとして扱う選択肢があるが、この拡張では利用者の指定に従いUSと同列を基準とする。実際の親子リンクは保持し、標準外の関係も取得できるものを表示する。

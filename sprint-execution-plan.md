@@ -189,3 +189,9 @@ interface PlanNode { item: Item; children: PlanNode[]; activeSprints: number[]; 
 - バーの端に小さく完了率 `(Original Estimate − Remaining Work) / Original Estimate × 100` を表示する。親は取得したTaskの工数を加算し、統合行も元項目の集約値を加算する。負値・100%超を丸め込まない。見積が未設定または0なら割合を表示しない。不足項目を除いた参考値は*と説明で区別する。
 - TaskのないUSも自身のSprintを斜線で表示する。Epic・Feature・US・統合行は取得した子孫Taskの所属Sprintで斜線を判定し、表示階層の省略やフィルターで変えない。
 - 追加機能の検証後、0.2.0としてREADME・変更履歴・掲載画像を更新し、VSIXを生成する。
+
+## 14. 表示調整の追加仕様
+
+- Bugを表示種類と既定選択に追加する。USと同じ階層としてFeature → Bug → Taskを扱い、Bugも選択Sprint・チームAreaに一致する取得起点とする。未計画Bugは子Taskから祖先として取得し、取得対象の子Taskと自身の有効Sprintで期間を集約する。
+- 未割当のバーには担当者アイコンを表示しない。未割当フィルターと担当者の説明は維持する。
+- 進捗の表示はTaskのみとする。Epic・Feature・US・Bugには％・進捗の塗り・進捗ツールチップを表示しない。計算式・負値・100%超・見積未設定の扱いは維持する。

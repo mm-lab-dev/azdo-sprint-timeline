@@ -21,13 +21,14 @@ try {
   await icon.screenshot({ path: "resources/icon.png", omitBackground: true });
   await icon.close();
   const page = await browser.newPage({
-    viewport: { width: 1280, height: 1200 },
+    viewport: { width: 1440, height: 1200 },
     deviceScaleFactor: 1,
     colorScheme: "light",
+    reducedMotion: "reduce",
   });
   await page.goto(
     new URL(
-      "?scenario=epic",
+      "?scenario=bugs",
       process.env.LISTING_BASE_URL || "http://127.0.0.1:4200",
     ).href,
   );
@@ -39,6 +40,13 @@ try {
   await page.getByRole("table").waitFor();
   await page.getByRole("button", { name: "すべて展開", exact: true }).click();
   await page.locator('[data-item-id="205"]').waitFor();
+  await page
+    .getByRole("button", { name: "折りたたむ #102", exact: true })
+    .click();
+  await page
+    .getByRole("button", { name: "折りたたむ #2", exact: true })
+    .click();
+  await page.locator('[data-item-id="501"]').waitFor();
   await page.locator("h1").click();
   await page.screenshot({
     path: "resources/readme/overview.png",

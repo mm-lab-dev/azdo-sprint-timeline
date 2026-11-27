@@ -84,6 +84,38 @@ function fixture(seedCount = 201) {
   return { repository, request, requests };
 }
 describe("Azure DevOps読み取り専用repository", () => {
+  test("BugをWIQLの起点に含め、未計画Bugの祖先もTaskから取得する", async () => {
+    const f = fixture(2);
+    const original = f.request.getMockImplementation()!;
+    f.request.mockImplementation(async (path, body) => {
+      if (path.endsWith("/workitemsbatch"))
+        return {
+          value: (body as { ids: number[] }).ids.map((id) => {
+            if (id === 1) return raw(id, "Bug", 9002);
+            if (id === 2) return raw(id, "Task", 9001);
+            if (id === 9001) {
+              const bug = raw(id, "Bug", 9002);
+              bug.fields["System.IterationPath"] = "Demo";
+              return bug;
+            }
+            return raw(id, "Feature");
+          }),
+        };
+      return original(path, body);
+    });
+    const result = await f.repository.load("team", [sprints[2]]);
+    expect(result.seedIds).toEqual([1, 2]);
+    expect(result.items.find((i) => i.id === 9001)).toMatchObject({
+      type: "Bug",
+      iterationPath: "Demo",
+      parentId: 9002,
+    });
+    const query = f.requests.find((r) => r.path.includes("/wiql"))?.body as {
+      query: string;
+    };
+    expect(query.query).toContain("IN ('User Story', 'Bug', 'Task')");
+    expect(result.warnings).toEqual([]);
+  });
   test("標準のRemaining WorkとOriginal Estimateを数値として保持する", () => {
     const item = raw(1);
     item.fields["Microsoft.VSTS.Scheduling.OriginalEstimate"] = 10;

@@ -22,7 +22,7 @@ import {
   WorkItemType,
   workItemTypes,
 } from "../../domain/model";
-import { assigneeOf } from "../../domain/assignee";
+import { assigneeOf, unassignedId } from "../../domain/assignee";
 import { completionPercent, sumEffort } from "../../domain/effort";
 import { AssigneeAvatar } from "../../shared/assignee-avatar";
 import {
@@ -72,7 +72,7 @@ export class App {
   readonly notice = signal("");
   readonly filters = signal<Filters>({
     search: "",
-    types: ["Feature", "User Story", "Task"],
+    types: ["Feature", "User Story", "Bug", "Task"],
     states: null,
     assignees: null,
   });
@@ -104,7 +104,7 @@ export class App {
   );
   readonly grid = computed(
     () =>
-      `minmax(330px, 420px) repeat(${this.selectedSprints().length}, 150px)`,
+      `var(--item-column, 420px) repeat(${this.selectedSprints().length}, 150px)`,
   );
   readonly plannedItems = computed(() => {
     const items = [];
@@ -312,7 +312,9 @@ export class App {
         ? "feature"
         : n.item.type === "User Story"
           ? "story"
-          : "task";
+          : n.item.type === "Bug"
+            ? "bug"
+            : "task";
   }
   cellMembers(row: Row, absolute: number) {
     return row.members.filter(
@@ -338,7 +340,7 @@ export class App {
           return [p.id, p] as const;
         }),
       ).values(),
-    ];
+    ].filter((person) => person.id !== unassignedId);
   }
   personOf(node: PlanNode) {
     return assigneeOf(node.item);
@@ -363,7 +365,9 @@ export class App {
   }
   progress(members: PlanNode[]) {
     const effort = sumEffort(members.map((n) => n.effort));
-    const percent = completionPercent(effort);
+    const percent = members.every((n) => n.item.type === "Task")
+      ? completionPercent(effort)
+      : null;
     return {
       ...effort,
       percent,
@@ -374,6 +378,7 @@ export class App {
     };
   }
   progressTitle(members: PlanNode[]) {
+    if (!members.every((n) => n.item.type === "Task")) return "";
     const p = this.progress(members);
     return p.percent === null
       ? "完了率: Original Estimateが未設定または0のため計算しません。"
@@ -404,7 +409,7 @@ export class App {
     const names = n.activeSprints
       .map((i) => this.sprints()[i]?.name)
       .join(", ");
-    return `${n.item.type} #${n.item.id}: ${n.item.title}\n状態: ${n.item.state} / 担当: ${n.item.assignedTo || "未割当"}\n自身のIteration: ${n.item.iterationPath}\n既知の期間: ${n.interval ? this.sprints()[n.interval[0]]?.start + " ～ " + this.sprints()[n.interval[1]]?.finish : "未計画"}\n集約元Sprint: ${names}\n${this.progressTitle([n])}\n取得した子TaskとUS自身の有効Sprintを集約。範囲外の子Taskは未取得。`;
+    return `${n.item.type} #${n.item.id}: ${n.item.title}\n状態: ${n.item.state} / 担当: ${n.item.assignedTo || "未割当"}\n自身のIteration: ${n.item.iterationPath}\n既知の期間: ${n.interval ? this.sprints()[n.interval[0]]?.start + " ～ " + this.sprints()[n.interval[1]]?.finish : "未計画"}\n集約元Sprint: ${names}${n.item.type === "Task" ? "\n" + this.progressTitle([n]) : ""}\n取得した子TaskとUS・Bug自身の有効Sprintを集約。範囲外の子Taskは未取得。`;
   }
   async open(id: number) {
     try {

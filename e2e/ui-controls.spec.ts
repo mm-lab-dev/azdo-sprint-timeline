@@ -270,13 +270,91 @@ test("完了率を表示し、100%超・負値を維持。見積0や未設定を
   await expect(
     page.locator('[data-item-id="205"] .progress-value'),
   ).toHaveCount(0);
-  await expect(page.locator('[data-item-id="101"] .progress-value')).toHaveText(
-    ["85%", "85%"],
+  await expect(
+    page.locator('[data-item-id="101"] .progress-value'),
+  ).toHaveCount(0);
+  await expect(page.locator('[data-item-id="2"] .progress-value')).toHaveCount(
+    0,
+  );
+  await expect(page.locator('[data-item-id="2"] .progress-fill')).toHaveCount(
+    0,
   );
   await expect(
-    page.locator('[data-item-id="2"] .progress-value').first(),
-  ).toHaveText("50%*");
+    page.locator('[data-item-id="2"] .bar').first(),
+  ).not.toHaveAttribute("title", /完了率/);
+});
+
+test("BugをUSと同じ階層に表示し、Task由来の期間・統合・階層省略を維持する", async ({
+  page,
+}) => {
+  await page.goto("/?scenario=bugs");
+  await range(page);
   await expect(
-    page.locator('[data-item-id="2"] .progress-value').first(),
-  ).toHaveAttribute("title", /未設定 1件/);
+    page.getByRole("checkbox", { name: "種類 Bug", exact: true }),
+  ).toBeChecked();
+  await expect(page.locator('[data-item-id="501"] .type-mark')).toHaveText("B");
+  await expect(page.locator('[data-item-id="501"] .item-cell')).toHaveCSS(
+    "padding-left",
+    "32px",
+  );
+  await expect(page.locator('[data-item-id="501"] .bar')).toHaveCount(3);
+  await expect(page.locator('[data-item-id="501"] .bar.gap')).toHaveCount(1);
+  await expect(page.locator('[data-item-id="601"] .item-cell')).toHaveCSS(
+    "padding-left",
+    "52px",
+  );
+  await expect(
+    page.locator('[data-item-id="502"][data-member-ids~="504"] .bar'),
+  ).toHaveCount(2);
+  await expect(page.locator('[data-item-id="503"]')).toHaveCount(1);
+  await expect(page.locator('[data-item-id="505"] .bar.gap')).toHaveCount(1);
+  await expect(page.locator('[data-item-id="506"]')).toHaveCount(0);
+  await expect(page.locator('[data-item-id="604"]')).toHaveCount(0);
+  await expect(page.locator(".warning")).toHaveCount(0);
+  await page.getByRole("checkbox", { name: "種類 Bug", exact: true }).uncheck();
+  await expect(page.locator('[data-item-id="501"]')).toHaveCount(0);
+  await expect(page.locator('[data-item-id="601"] .item-cell')).toHaveCSS(
+    "padding-left",
+    "32px",
+  );
+  await page.getByRole("checkbox", { name: "種類 Bug", exact: true }).check();
+  await expect(page.locator('[data-item-id="501"] .bar')).toHaveCount(3);
+  await page.locator('[data-item-id="501"] .bar').first().click();
+  await expect(
+    page.getByText("モック: Work Item #501 を開きました。", { exact: true }),
+  ).toBeVisible();
+});
+
+test("未割当のバーにアイコンを出さず、進捗はTaskだけに表示する", async ({
+  page,
+}) => {
+  await page.goto("/?scenario=bugs");
+  await range(page);
+  await page.getByRole("checkbox", { name: "種類 Epic", exact: true }).check();
+  await page.getByRole("button", { name: "すべて展開", exact: true }).click();
+  await expect(
+    page.locator('[data-item-id="505"] .bar app-assignee-avatar'),
+  ).toHaveCount(0);
+  const merged = page.locator('[data-item-id="601"][data-member-ids~="603"]');
+  await expect(merged.locator(".bar app-assignee-avatar")).toHaveCount(1);
+  await expect(
+    merged.getByRole("img", { name: "Aki", exact: true }),
+  ).toHaveCount(1);
+  await expect(merged.locator(".progress-value")).toHaveText("40%");
+  await expect(page.locator('[data-item-id="602"] .progress-value')).toHaveText(
+    "80%",
+  );
+  for (const id of [900, 1, 101, 501, 502, 503, 505]) {
+    await expect(
+      page.locator('[data-item-id="' + id + '"] .progress-value'),
+    ).toHaveCount(0);
+    await expect(
+      page.locator('[data-item-id="' + id + '"] .progress-fill'),
+    ).toHaveCount(0);
+  }
+  await selectFilter(page, "担当者", ["未割当"]);
+  await expect(page.locator('[data-item-id="505"]')).toBeVisible();
+  await expect(
+    page.locator(".bar").getByRole("img", { name: "未割当", exact: true }),
+  ).toHaveCount(0);
 });

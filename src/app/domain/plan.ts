@@ -8,6 +8,7 @@ import {
   PlanNode,
   PlanOptions,
   WorkItemType,
+  workItemTypes,
   Row,
   Sprint,
 } from "./model";
@@ -69,7 +70,7 @@ export function seedItems(
   return items.filter(
     (i) =>
       i.project === project &&
-      ["User Story", "Task"].includes(i.type) &&
+      ["User Story", "Bug", "Task"].includes(i.type) &&
       inAreas(i.areaPath, areas) &&
       paths.has(pathKey(i.iterationPath)),
   );
@@ -147,8 +148,10 @@ export function buildPlan(
       parent.children.push(node);
       if (!(
         (parent.item.type === "Epic" && node.item.type === "Feature") ||
-        (parent.item.type === "Feature" && node.item.type === "User Story") ||
-        (parent.item.type === "User Story" && node.item.type === "Task")
+        (parent.item.type === "Feature" &&
+          ["User Story", "Bug"].includes(node.item.type)) ||
+        (["User Story", "Bug"].includes(parent.item.type) &&
+          node.item.type === "Task")
       ))
         hierarchyWarnings.push(
           `想定外の階層: #${parent.item.id} → #${node.item.id}`,
@@ -161,7 +164,7 @@ export function buildPlan(
         );
       roots.push(node);
     }
-    if (!["Epic", "Feature", "User Story", "Task"].includes(node.item.type))
+    if (!workItemTypes.includes(node.item.type as WorkItemType))
       hierarchyWarnings.push(
         `対象外タイプを祖先として保持: #${node.item.id} ${node.item.type}`,
       );

@@ -36,6 +36,68 @@ function find(plan: Plan, id: number): PlanNode {
   throw new Error(`Missing ${id}`);
 }
 describe("受け入れ条件: Sprint期間集約", () => {
+  test("BugをUSと同じ階層で取得・集約し、未計画Bugも子Taskから保持する", () => {
+    const bug: Item = {
+      ...items[1],
+      id: 501,
+      type: "Bug",
+      iterationPath: "Demo",
+    };
+    const data: Item[] = [
+      items[0],
+      bug,
+      { ...items[2], id: 601, parentId: 501 },
+      {
+        ...items[2],
+        id: 602,
+        title: "別Sprintの修正Task",
+        parentId: 501,
+        iterationPath: sprints[3].path,
+      },
+      { ...bug, id: 502, title: "単独のBug", iterationPath: sprints[2].path },
+      { ...bug, id: 503 },
+      { ...bug, id: 504, iterationPath: sprints[4].path },
+      {
+        ...bug,
+        id: 505,
+        iterationPath: sprints[2].path,
+        areaPath: "Demo\\Experience",
+      },
+    ];
+    const seeds = seedItems(
+      data,
+      "Demo",
+      [{ path: "Demo\\Platform", includeChildren: true }],
+      sprints.slice(1, 4),
+    );
+    expect(seeds.map((i) => i.id)).toEqual([601, 602, 502]);
+    const plan = buildPlan(
+      { items: data, seedIds: seeds.map((i) => i.id), warnings: [] },
+      sprints,
+      [1, 3],
+    );
+    expect(plan.warnings).toEqual([]);
+    expect(find(plan, 501).interval).toEqual([1, 3]);
+    expect(find(plan, 501).taskSprints).toEqual([1, 3]);
+    expect(find(plan, 502).interval).toEqual([2, 2]);
+    expect(find(plan, 502).taskSprints).toEqual([]);
+    const rows = visibleRows(
+      plan,
+      { ...filters, types: ["Feature", "Task"] },
+      new Set([1, 501]),
+    );
+    expect(rows.map((r) => [r.node.item.id, r.depth])).toEqual([
+      [1, 0],
+      [601, 1],
+      [602, 1],
+    ]);
+    expect(find(plan, 1).interval).toEqual([1, 3]);
+    expect(
+      visibleRows(plan, { ...filters, types: ["Bug"] }, new Set()).map(
+        (r) => r.node.item.id,
+      ),
+    ).toEqual([501, 502]);
+  });
   test("Featureより上のEpicを除外し、各Featureを警告なしのルートにする", () => {
     const data = items.map((i) =>
       i.type === "Feature" ? { ...i, parentId: 900 } : i,

@@ -43,7 +43,7 @@ export class MockRepository implements PlanRepository {
         ),
         warnings: [],
       };
-    const plannedItems = ["epic", "grouped"].includes(this.scenario)
+    const plannedItems = ["epic", "grouped", "bugs"].includes(this.scenario)
       ? items.filter((i) => i.id !== 106)
       : items;
     const base = (id: number) => items.find((i) => i.id === id)!;
@@ -105,6 +105,93 @@ export class MockRepository implements PlanRepository {
             },
           ]
         : plannedItems;
+    if (this.scenario === "bugs") {
+      const bug = {
+        ...base(101),
+        type: "Bug",
+        assignedTo: undefined,
+        assignedToId: undefined,
+        assignedToAvatar: undefined,
+        originalEstimate: 10,
+        remainingWork: 5,
+      };
+      const task = {
+        ...base(201),
+        parentId: 501,
+        assignedTo: undefined,
+        assignedToAvatar: undefined,
+        originalEstimate: 10,
+        remainingWork: 4,
+      };
+      data = [
+        ...data,
+        {
+          ...bug,
+          id: 501,
+          title: "通知の重複を修正する",
+          iterationPath: "Demo",
+        },
+        {
+          ...bug,
+          id: 502,
+          title: "入力エラーを修正する",
+          iterationPath: sprints[2].path,
+        },
+        {
+          ...bug,
+          id: 504,
+          title: "入力エラーを修正する",
+          iterationPath: sprints[3].path,
+          assignedTo: "Ren",
+          assignedToAvatar: "assets/avatars/ren.png",
+        },
+        {
+          ...bug,
+          id: 505,
+          title: "独立した不具合",
+          parentId: undefined,
+          iterationPath: sprints[2].path,
+        },
+        { ...bug, id: 506, title: "未計画の不具合", iterationPath: "Demo" },
+        {
+          ...bug,
+          id: 503,
+          type: "User Story",
+          title: "入力エラーを修正する",
+          iterationPath: sprints[2].path,
+        },
+        {
+          ...task,
+          id: 601,
+          title: "通知の重複テスト",
+          iterationPath: sprints[1].path,
+        },
+        {
+          ...task,
+          id: 602,
+          title: "通知の修正",
+          iterationPath: sprints[3].path,
+          remainingWork: 2,
+          assignedTo: "Ren",
+          assignedToAvatar: "assets/avatars/ren.png",
+        },
+        {
+          ...task,
+          id: 603,
+          title: "通知の重複テスト",
+          iterationPath: sprints[1].path,
+          remainingWork: 8,
+          assignedTo: "Aki",
+          assignedToAvatar: "assets/avatars/aki.png",
+        },
+        {
+          ...task,
+          id: 604,
+          title: "範囲外の修正",
+          iterationPath: sprints[4].path,
+        },
+      ];
+    }
     if (this.scenario === "progress")
       data = data.map((i) =>
         i.id === 201

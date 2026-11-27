@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.0
+
+- Refresh the layout, controls, and light/dark themes, with a compact layout for narrow screens.
+- Add Bug alongside User Story, including Task-based periods and type selection.
+- Hide unassigned avatars on bars and show progress only for Tasks.
+
 ## 0.2.2
 
 - Replace bundled SVG avatars with PNG images to fix Marketplace validation.

@@ -28,7 +28,7 @@ export function wiql(project: string, areas: Area[], sprint: Sprint): string {
         : `[System.AreaPath] = ${literal(a.path)}`,
     )
     .join(" OR ");
-  return `SELECT [System.Id] FROM WorkItems WHERE [System.TeamProject] = ${literal(project)} AND [System.WorkItemType] IN ('User Story', 'Task') AND [System.IterationPath] = ${literal(sprint.path)} AND (${area}) ORDER BY [System.Id]`;
+  return `SELECT [System.Id] FROM WorkItems WHERE [System.TeamProject] = ${literal(project)} AND [System.WorkItemType] IN ('User Story', 'Bug', 'Task') AND [System.IterationPath] = ${literal(sprint.path)} AND (${area}) ORDER BY [System.Id]`;
 }
 export function parentId(raw: WorkItem): number | undefined {
   const link = raw.relations?.find(
