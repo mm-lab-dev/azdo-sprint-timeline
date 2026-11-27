@@ -1,3 +1,4 @@
+import { Diagnostic, message } from "../i18n/messages";
 import type { WorkItem } from "azure-devops-extension-api/WorkItemTracking";
 import type {
   TeamSettingsIteration,
@@ -147,9 +148,7 @@ export class AzureRepository implements PlanRepository {
         includeChildren: a.includeChildren,
       })),
       warnings:
-        sprints.length !== values.length
-          ? ["日付なし・無効日付・プロジェクト直下のIterationを除外しました。"]
-          : [],
+        sprints.length !== values.length ? [message("invalidIterations")] : [],
     };
     this.cachedSettings.set(teamId, settings);
     return settings;
@@ -163,12 +162,12 @@ export class AzureRepository implements PlanRepository {
       item.type === (options.includeEpics ? "Epic" : "Feature");
     const settings =
       this.cachedSettings.get(teamId) || (await this.settings(teamId));
-    const warnings: string[] = [];
+    const warnings: Diagnostic[] = [];
     if (!settings.areas.length || !selected.length)
       return {
         items: [],
         seedIds: [],
-        warnings: ["チームAreaまたはSprintが設定されていません。"],
+        warnings: [message("missingSettings")],
       };
     const ids = new Set<number>();
     for (const sprint of selected) {
@@ -178,17 +177,13 @@ export class AzureRepository implements PlanRepository {
           { query: wiql(this.project.name, settings.areas, sprint) },
         );
         if (result.workItems.length >= 20000)
-          warnings.push(
-            `部分取得: ${sprint.name} がWIQL上限に達しました。Sprint範囲またはチームAreaを縮小してください。`,
-          );
+          warnings.push(message("wiqlLimit", { sprint: sprint.name }));
         result.workItems.forEach((i) => ids.add(i.id));
       } catch (e) {
         const server = e as { message?: string; status?: number };
         // A single query is already split by Sprint. Never silently swallow failures.
         if (server.status === 400)
-          warnings.push(
-            `部分取得: ${sprint.name} の検索失敗（WIQL長/件数上限または設定）。範囲・Area設定を縮小してください。`,
-          );
+          warnings.push(message("wiqlFailed", { sprint: sprint.name }));
         else throw e;
       }
     }
@@ -232,11 +227,11 @@ export class AzureRepository implements PlanRepository {
         raw.forEach((r) => {
           const item = mapItem(r);
           if (item.project === this.project.name) fetched.set(item.id, item);
-          else warnings.push(`別プロジェクトの親 #${item.id} は辿りません。`);
+          else warnings.push(message("crossProject", { id: item.id }));
         });
         if (raw.length < batch.length)
           warnings.push(
-            `部分取得: ${batch.length - raw.length}件を取得できませんでした（権限不足・削除等）。`,
+            message("missingItems", { count: batch.length - raw.length }),
           );
       }
     };
@@ -265,9 +260,7 @@ export class AzureRepository implements PlanRepository {
           (i) => !isBoundary(i) && i.parentId && !attempted.has(i.parentId),
         )
       )
-        warnings.push(
-          "祖先探索の深さ上限64に到達しました。未取得の親があります。",
-        );
+        warnings.push(message("depthLimit"));
     }
     return { items: [...fetched.values()], seedIds: seeds, warnings };
   }

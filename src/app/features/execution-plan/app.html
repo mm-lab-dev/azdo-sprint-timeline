@@ -5,30 +5,44 @@
       <div>
         <p class="eyebrow">Azure Boards <span>/</span> Planning</p>
         <h1>Sprint Timeline</h1>
-        <p class="subtitle">Taskの所属Sprintから、実行計画をつなぐ。</p>
+        <p class="subtitle">{{ t('subtitle') }}</p>
       </div>
     </div>
-    <span class="badge">{{ mock ? 'MOCK DATA' : 'READ ONLY' }}</span>
+    <div class="header-actions">
+      <span class="badge">{{ mock ? 'MOCK DATA' : 'READ ONLY' }}</span>
+      <label class="language-picker"
+        ><span class="sr-only">Language / 言語</span>
+        <select
+          aria-label="Language / 言語"
+          [ngModel]="i18n.preference()"
+          (ngModelChange)="i18n.select($event)"
+        >
+          <option value="auto">{{ t('autoLanguage') }}</option>
+          <option value="ja">日本語</option>
+          <option value="en">English</option>
+        </select>
+      </label>
+    </div>
   </header>
   <div class="control-panel">
-    <section class="toolbar" aria-label="計画設定">
+    <section class="toolbar" [attr.aria-label]="t('planSettings')">
       <label
-        >Team<select
-          aria-label="Team"
+        >{{ t('team') }}<select
+          [attr.aria-label]="t('team')"
           [disabled]="!teams().length"
           [ngModel]="teamId()"
           (ngModelChange)="changeTeam($event)"
         >
           @if (!teams().length) {
-          <option value="">チーム未取得</option>
+          <option value="">{{ t('teamsMissing') }}</option>
           } @for (team of teams(); track team.id) {
           <option [value]="team.id">{{ team.name }}</option>
           }
         </select></label
       >
       <label
-        >開始 Sprint<select
-          aria-label="開始 Sprint"
+        >{{ t('startSprint') }}<select
+          [attr.aria-label]="t('startSprint')"
           [ngModel]="range()[0]"
           (ngModelChange)="changeRange(0, $event)"
         >
@@ -39,8 +53,8 @@
       >
       <span class="range-arrow" aria-hidden="true">→</span>
       <label
-        >終了 Sprint<select
-          aria-label="終了 Sprint"
+        >{{ t('endSprint') }}<select
+          [attr.aria-label]="t('endSprint')"
           [ngModel]="range()[1]"
           (ngModelChange)="changeRange(1, $event)"
         >
@@ -50,17 +64,17 @@
         </select></label
       >
       <button class="primary" (click)="refresh()" [disabled]="loading()">
-        <span aria-hidden="true">↻</span> 更新
+        <span aria-hidden="true">↻</span> {{ t('refresh') }}
       </button>
     </section>
-    <section class="filterbar" aria-label="表示設定">
-      <fieldset class="type-picker" aria-label="表示する種類">
-        <legend>表示するWork Item</legend>
+    <section class="filterbar" [attr.aria-label]="t('displaySettings')">
+      <fieldset class="type-picker" [attr.aria-label]="t('displayTypes')">
+        <legend>{{ t('workItemTypes') }}</legend>
         <div class="type-options">
           @for (option of typeOptions; track option.type) {<label
             ><input
               type="checkbox"
-              [attr.aria-label]="'種類 ' + option.label"
+              [attr.aria-label]="t('typeLabel', {type: option.label})"
               [checked]="filters().types.includes(option.type)"
               [disabled]="loading()"
               (change)="toggleType(option.type)"
@@ -72,31 +86,37 @@
         </div>
       </fieldset>
       <div class="tree-actions">
-        <button (click)="expandAll()" [disabled]="loading()">すべて展開</button
+        <button (click)="expandAll()" [disabled]="loading()">
+          {{ t('expandAll') }}</button
         ><button (click)="collapseAll()" [disabled]="loading()">
-          すべて折りたたむ
+          {{ t('collapseAll') }}
         </button>
       </div>
       <label class="search"
-        >検索<input
+        >{{ t('search') }}<input
           pInputText
-          aria-label="検索"
-          placeholder="ID / タイトルを検索"
+          [attr.aria-label]="t('search')"
+          [placeholder]="t('searchPlaceholder')"
           [ngModel]="filters().search"
           (ngModelChange)="updateFilter('search', $event)"
       /></label>
       <details class="multi-filter">
-        <summary>状態 <span>{{ filterCaption('states') }}</span></summary>
-        <fieldset aria-label="状態フィルター">
-          <legend class="sr-only">状態</legend>
+        <summary>
+          {{ t('state') }} <span>{{ filterCaption('states') }}</span>
+        </summary>
+        <fieldset [attr.aria-label]="t('stateFilter')">
+          <legend class="sr-only">{{ t('state') }}</legend>
           <div class="filter-actions">
-            <button (click)="updateFilter('states', null)">全選択</button
-            ><button (click)="updateFilter('states', [])">全解除</button>
+            <button (click)="updateFilter('states', null)">
+              {{ t('selectAll') }}</button
+            ><button (click)="updateFilter('states', [])">
+              {{ t('clearAll') }}
+            </button>
           </div>
           @for (state of states(); track state) {<label
             ><input
               type="checkbox"
-              [attr.aria-label]="'状態 ' + state"
+              [attr.aria-label]="t('stateLabel', {state})"
               [checked]="checked('states', state)"
               (change)="toggleFilter('states', state)"
             />{{ state }}</label
@@ -104,17 +124,22 @@
         </fieldset>
       </details>
       <details class="multi-filter">
-        <summary>担当者 <span>{{ filterCaption('assignees') }}</span></summary>
-        <fieldset aria-label="担当者フィルター">
-          <legend class="sr-only">担当者</legend>
+        <summary>
+          {{ t('assignee') }} <span>{{ filterCaption('assignees') }}</span>
+        </summary>
+        <fieldset [attr.aria-label]="t('assigneeFilter')">
+          <legend class="sr-only">{{ t('assignee') }}</legend>
           <div class="filter-actions">
-            <button (click)="updateFilter('assignees', null)">全選択</button
-            ><button (click)="updateFilter('assignees', [])">全解除</button>
+            <button (click)="updateFilter('assignees', null)">
+              {{ t('selectAll') }}</button
+            ><button (click)="updateFilter('assignees', [])">
+              {{ t('clearAll') }}
+            </button>
           </div>
           @for (person of assignees(); track person.id) {<label
             ><input
               type="checkbox"
-              [attr.aria-label]="'担当者 ' + person.name"
+              [attr.aria-label]="t('assigneeLabel', {name: person.name})"
               [checked]="checked('assignees', person.id)"
               (change)="toggleFilter('assignees', person.id)"
             /><app-assignee-avatar [person]="person" aria-hidden="true" />{{
@@ -124,71 +149,64 @@
       </details>
     </section>
   </div>
-  <section class="timeline-panel" aria-label="タイムラインと表示状況">
+  <section class="timeline-panel" [attr.aria-label]="t('timelineStatus')">
     <div class="plan-meta">
       <div class="plan-summary">
-        <h2>実行計画</h2>
+        <h2>{{ t('executionPlan') }}</h2>
         <span class="count-chip"
           ><strong>{{ selectedSprints().length }}</strong> Sprints</span
         >
-        <span class="row-count">{{ rows().length }} 表示行</span>
+        <span class="row-count"
+          >{{ t('displayRows', {count: rows().length}) }}</span
+        >
       </div>
       <div class="legend">
         <span><i class="epic"></i>Epic</span
         ><span><i class="feature"></i>Feature</span
         ><span><i class="story"></i>User Story</span
         ><span><i class="bug"></i>Bug</span><span><i class="task"></i>Task</span
-        ><span><i class="gap"></i>Taskのない区間</span>
+        ><span><i class="gap"></i>{{ t('taskGap') }}</span>
       </div>
     </div>
-    <p class="scope-note">
-      選択範囲の実行計画です。範囲外の子Taskは取得・集約しません。← →
-      は既知の範囲外への継続を示します。
-    </p>
+    <p class="scope-note">{{ t('scopeNote') }}</p>
     @if (hasPartialEffort()) {
-    <p class="scope-note">
-      完了率の * は、工数が未設定の項目を除いた参考値です。
-    </p>
+    <p class="scope-note">{{ t('partialEffortNote') }}</p>
     } @if (hasFilters()) {
-    <p class="scope-note">
-      一致項目と祖先を表示中。非表示の子に由来する集約期間も維持しています。
-    </p>
+    <p class="scope-note">{{ t('filterNote') }}</p>
     } @if (notice()) {
-    <p role="status">{{ notice() }}</p>
+    <p role="status">{{ i18n.format(notice()!) }}</p>
     } @if (loading()) {
-    <div class="state-panel" role="status">実行計画を読み込み中…</div>
-    } @else if (error()) {
+    <div class="state-panel" role="status">{{ t('loading') }}</div>
+    } @else if (errorText()) {
     <div class="state-panel error" role="alert">
-      <p>{{ error() }}</p>
-      <button (click)="retry()">再試行</button>
+      <p>{{ errorText() }}</p>
+      <button (click)="retry()">{{ t('retry') }}</button>
     </div>
     } @else if (!teams().length) {
     <div class="state-panel" role="status">
-      <p>
-        チーム一覧が0件でした。プロジェクトとチームの参照権限を確認し、再取得してください。
-      </p>
-      <button (click)="initialize()">チーム一覧を再取得</button>
+      <p>{{ t('emptyTeams') }}</p>
+      <button (click)="initialize()">{{ t('reloadTeams') }}</button>
     </div>
     } @else { @if (settingsWarnings().length) {
     <details class="scope-note">
-      <summary>表示するSprintについて</summary>
+      <summary>{{ t('sprintInformation') }}</summary>
       <ul>
         @for (w of settingsWarnings(); track $index) {
-        <li>{{ w }}</li>
+        <li>{{ i18n.format(w) }}</li>
         }
       </ul>
     </details>
     } @if (retrievalWarnings().length) {
     <aside class="warning" role="status">
       <strong
-        >一部の項目を取得できませんでした（{{ retrievalWarnings().length
-        }}件）</strong
+        >{{ t('retrievalWarning', {count: retrievalWarnings().length})
+        }}</strong
       >
       <details>
-        <summary>詳細を表示</summary>
+        <summary>{{ t('showDetails') }}</summary>
         <ul>
           @for (w of retrievalWarnings(); track $index) {
-          <li>{{ w }}</li>
+          <li>{{ i18n.format(w) }}</li>
           }
         </ul>
       </details>
@@ -196,31 +214,30 @@
     } @if (hierarchyWarnings().length) {
     <aside class="warning" role="status">
       <strong
-        >階層を確認してください（{{ hierarchyWarnings().length }}件）</strong
+        >{{ t('hierarchyWarning', {count: hierarchyWarnings().length})
+        }}</strong
       >
       <details>
-        <summary>詳細を表示</summary>
+        <summary>{{ t('showDetails') }}</summary>
         <ul>
           @for (w of hierarchyWarnings(); track $index) {
-          <li>{{ w }}</li>
+          <li>{{ i18n.format(w) }}</li>
           }
         </ul>
       </details>
     </aside>
     } @if (!rows().length) {
-    <div class="state-panel" role="status">
-      表示対象がありません。チーム・Sprint範囲・フィルターを確認してください。
-    </div>
+    <div class="state-panel" role="status">{{ t('emptyPlan') }}</div>
     } @else {
     <div
       class="timeline-scroll"
       tabindex="0"
-      aria-label="Sprintタイムライン"
+      [attr.aria-label]="t('timeline')"
       role="region"
     >
       <div
         role="table"
-        aria-label="実行計画"
+        [attr.aria-label]="t('executionPlan')"
         class="timeline"
         [style.min-width]="'calc(var(--item-column, 420px) + ' + selectedSprints().length * 150 + 'px)'"
       >
@@ -230,7 +247,7 @@
           [style.grid-template-columns]="grid()"
         >
           <div role="columnheader" class="item-cell">
-            WORK ITEM <small>タイプ / ID / タイトル / 状態</small>
+            WORK ITEM <small>{{ t('columns') }}</small>
           </div>
           @for (s of selectedSprints(); track s.id) {
           <div
@@ -241,16 +258,14 @@
             <strong>{{ s.name }}</strong
             ><small
               >{{ date(s.start) }} – {{ date(s.finish) }} @if (current(s))
-              {<span>現在</span>}</small
+              {<span>{{ t('current') }}</span>}</small
             >
           </div>
           }
         </div>
         @for (row of rows(); track row.key) { @if (row.orphanGroupStart) {
         <div role="row" class="orphan-group">
-          <div role="cell">
-            親未取得グループ — 参照できる項目を保持しています
-          </div>
+          <div role="cell">{{ t('orphanGroup') }}</div>
         </div>
         }
         <div
@@ -269,7 +284,7 @@
           >
             @if (row.hasChildren) {<button
               class="toggle"
-              [attr.aria-label]="(isExpanded(row) ? '折りたたむ #' : '展開 #') + row.node.item.id"
+              [attr.aria-label]="t(isExpanded(row) || hasFilters() ? 'collapseItem' : 'expandItem', {id: row.node.item.id})"
               [attr.aria-expanded]="isExpanded(row) || hasFilters()"
               (click)="toggle(row)"
             >
@@ -288,7 +303,8 @@
               ><span>{{ row.node.item.title }}</span>
             </button>
             <span class="group-count"
-              >@if (row.members.length > 1) {{{ row.members.length }}件}</span
+              >@if (row.members.length > 1) {{{ t('groupCount', {count:
+              row.members.length}) }}}</span
             ><span class="item-states"
               >@for (state of rowStates(row); track state) {<span
                 class="item-state"
@@ -296,7 +312,9 @@
                 [class.state-closed]="closedState(state)"
                 >{{ state }}</span
               >}</span
-            >@if (row.node.orphan) {<span class="orphan">親未取得</span>}
+            >@if (row.node.orphan) {<span class="orphan"
+              >{{ t('parentMissing') }}</span
+            >}
           </div>
           @for (s of selectedSprints(); track s.id; let i = $index) {
           <div role="cell" class="sprint-cell" [class.current]="current(s)">
@@ -309,7 +327,7 @@
               [class.gap]="gap(row, range()[0] + i)"
               [class.bar-start]="!occupied(row, range()[0] + i - 1)"
               [class.bar-end]="!occupied(row, range()[0] + i + 1)"
-              [attr.aria-label]="ids(members) + ' ' + s.name + (gap(row, range()[0] + i) ? ' Taskなし' : ' 計画あり') + (p.percent !== null ? ' 完了率 ' + p.label : '')"
+              [attr.aria-label]="ids(members) + ' ' + s.name + ' ' + t(gap(row, range()[0] + i) ? 'noTask' : 'hasPlan') + (p.percent !== null ? ' ' + t('completionLabel', {value: p.label}) : '')"
               [title]="rowTooltip(row) + '\n' + progressTitle(members)"
               (click)="openMembers(members)"
             >
@@ -327,7 +345,7 @@
                 {<app-assignee-avatar [person]="person" />}@if (people.length >
                 3) {<span
                   class="avatar-overflow"
-                  [title]="people.length + '人の担当者'"
+                  [title]="t('assigneeCount', {count: people.length})"
                   >+{{ people.length - 3 }}</span
                 >}</span
               >
@@ -349,12 +367,14 @@
     </div>
     } }
   </section>
-  <dialog #itemDialog aria-label="Work Itemを選択">
+  <dialog #itemDialog [attr.aria-label]="t('chooseItem')">
     <div class="dialog-heading">
-      <h2>Work Itemを選択</h2>
-      <button (click)="itemDialog.close()" aria-label="閉じる">×</button>
+      <h2>{{ t('chooseItem') }}</h2>
+      <button (click)="itemDialog.close()" [attr.aria-label]="t('close')">
+        ×
+      </button>
     </div>
-    <p>この行にまとめた項目</p>
+    <p>{{ t('groupedItems') }}</p>
     <ul>
       @for (member of itemChoices(); track member.item.id) {
       <li>
@@ -362,8 +382,8 @@
           <app-assignee-avatar [person]="personOf(member)" /><span
             ><strong>#{{ member.item.id }} {{ member.item.title }}</strong
             ><small
-              >{{ member.item.state }} · {{ member.item.assignedTo || '未割当'
-              }} · {{ member.item.iterationPath }}</small
+              >{{ member.item.state }} · {{ member.item.assignedTo ||
+              t('unassigned') }} · {{ member.item.iterationPath }}</small
             ></span
           >
         </button>
@@ -372,7 +392,7 @@
     </ul>
   </dialog>
   <footer>
-    閲覧専用 <span>·</span> 選択した種類で階層表示
-    <span>·</span> バーまたはIDを選択してWork Itemを開く
+    {{ t('readOnly') }} <span>·</span> {{ t('hierarchyFooter') }}
+    <span>·</span> {{ t('openFooter') }}
   </footer>
 </main>

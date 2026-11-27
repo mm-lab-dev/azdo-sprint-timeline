@@ -11,7 +11,11 @@ import {
 } from "azure-devops-extension-api/WorkItemTracking";
 import { AzureRepository } from "../../data/azure-repository";
 import { ReadOnlyHttp } from "./http";
-export async function connect(): Promise<AzureRepository> {
+import { FilterScope } from "../../preferences/filter-preferences";
+export async function connect(
+  setCulture: (culture?: string) => void = () => {},
+  setFilterScope: (scope: FilterScope) => void = () => {},
+): Promise<AzureRepository> {
   const applyHostTheme = () => {
     const value = getComputedStyle(document.body)
       .getPropertyValue("--background-color")
@@ -32,12 +36,18 @@ export async function connect(): Promise<AzureRepository> {
   window.addEventListener("themeApplied", applyHostTheme);
   await SDK.init({ loaded: false, applyTheme: true });
   await SDK.ready();
+  setCulture(SDK.getPageContext()?.globalization?.culture);
   applyHostTheme();
   const page = await SDK.getService<IProjectPageService>(
     CommonServiceIds.ProjectPageService,
   );
   const project = await page.getProject();
   if (!project) throw new Error("Project context required");
+  setFilterScope({
+    hostId: SDK.getHost().id,
+    projectId: project.id,
+    userId: SDK.getUser().id,
+  });
   const location = await SDK.getService<ILocationService>(
     CommonServiceIds.LocationService,
   );

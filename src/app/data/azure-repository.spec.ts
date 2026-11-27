@@ -1,3 +1,4 @@
+import { formatMessage } from "../i18n/messages";
 import type { WorkItem } from "azure-devops-extension-api/WorkItemTracking";
 import {
   AzureRepository,
@@ -328,7 +329,9 @@ describe("Azure DevOps読み取り専用repository", () => {
     );
     const cross = await f.repository.load("team", [sprints[2]]);
     expect(cross.items).toHaveLength(1);
-    expect(cross.warnings.join()).toMatch(/別プロジェクト/);
+    expect(cross.warnings.map((w) => formatMessage(w)).join()).toMatch(
+      /別プロジェクト/,
+    );
   });
   test("親取得403を警告しseedは失わない", async () => {
     const f = fixture(1);
@@ -343,13 +346,17 @@ describe("Azure DevOps読み取り専用repository", () => {
     });
     const result = await f.repository.load("team", [sprints[2]]);
     expect(result.seedIds).toEqual([1]);
-    expect(result.warnings.join()).toMatch(/部分取得/);
+    expect(result.warnings.map((w) => formatMessage(w)).join()).toMatch(
+      /部分取得/,
+    );
   });
   test("WIQLをSprintで分割し上限到達を警告、読み取りendpointのみ", async () => {
     const f = fixture(20000);
     const result = await f.repository.load("team", [sprints[1], sprints[2]]);
     expect(f.requests.filter((r) => r.path.includes("/wiql"))).toHaveLength(2);
-    expect(result.warnings.join()).toMatch(/WIQL上限/);
+    expect(result.warnings.map((w) => formatMessage(w)).join()).toMatch(
+      /WIQL上限/,
+    );
     expect(
       f.requests
         .filter((r) => r.body)
@@ -366,7 +373,9 @@ describe("Azure DevOps読み取り専用repository", () => {
       });
       if (status === 400)
         expect(
-          (await f.repository.load("team", [sprints[2]])).warnings.join(),
+          (await f.repository.load("team", [sprints[2]])).warnings
+            .map((w) => formatMessage(w))
+            .join(),
         ).toMatch(/検索失敗/);
       else
         await expect(f.repository.load("team", [sprints[2]])).rejects.toEqual({

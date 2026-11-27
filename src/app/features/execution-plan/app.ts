@@ -1,3 +1,17 @@
+import { Localization } from "../../i18n/localization";
+import {
+  defaultFilters,
+  FilterPreferences,
+  FilterScope,
+} from "../../preferences/filter-preferences";
+import {
+  Diagnostic,
+  Message,
+  MessageKey,
+  message,
+  translate,
+  uniqueMessages,
+} from "../../i18n/messages";
 import {
   Component,
   ElementRef,
@@ -35,18 +49,24 @@ import {
 } from "../../domain/plan";
 export const REPOSITORY = new InjectionToken<PlanRepository>("repository");
 export const MOCK_MODE = new InjectionToken<boolean>("mock");
-export function errorMessage(error: unknown): string {
+export const FILTER_SCOPE = new InjectionToken<FilterScope>("filter scope");
+export function errorMessage(
+  error: unknown,
+  language: "ja" | "en" = "ja",
+): string {
   const e = error as { status?: number; statusCode?: number };
   const status = e?.status ?? e?.statusCode;
-  const message =
+  const text = translate(
     status === 403 || status === 401
-      ? "権限不足: このチームまたはWork Itemを参照できません。"
+      ? "permissionError"
       : status === 429
-        ? "アクセス集中: 時間をおいて再試行してください。"
-        : "通信エラー: 接続を確認して再試行してください。";
+        ? "rateLimitError"
+        : "networkError",
+    language,
+  );
   return typeof status === "number" && status > 0
-    ? `${message}（HTTP ${status}）`
-    : message;
+    ? text + translate("httpStatus", language, { status })
+    : text;
 }
 @Component({
   selector: "app-root",
@@ -56,6 +76,11 @@ export function errorMessage(error: unknown): string {
 })
 export class App {
   private readonly repository = inject(REPOSITORY);
+  private readonly preferences = new FilterPreferences(inject(FILTER_SCOPE));
+  private preferenceTeam = "";
+  private readonly savedAssigneeNames = signal<Record<string, string>>({});
+  readonly i18n = inject(Localization);
+  readonly t = this.i18n.t;
   readonly mock = inject(MOCK_MODE);
   readonly teams = signal<Team[]>([]);
   readonly sprints = signal<Sprint[]>([]);
@@ -67,14 +92,25 @@ export class App {
     warnings: [],
   });
   readonly loading = signal(true);
-  readonly error = signal("");
-  readonly settingsWarnings = signal<string[]>([]);
-  readonly notice = signal("");
+  readonly error = signal<{
+    cause?: unknown;
+    stage?: MessageKey;
+    range?: boolean;
+  } | null>(null);
+  readonly errorText = computed(() => {
+    const error = this.error();
+    if (!error) return "";
+    if (error.range) return this.t("rangeError");
+    return (
+      (error.stage ? this.t(error.stage) + ": " : "") +
+      errorMessage(error.cause, this.i18n.language())
+    );
+  });
+  readonly settingsWarnings = signal<Diagnostic[]>([]);
+  readonly notice = signal<Message | null>(null);
   readonly filters = signal<Filters>({
     search: "",
-    types: ["Feature", "User Story", "Bug", "Task"],
-    states: null,
-    assignees: null,
+    ...defaultFilters(),
   });
   readonly typeOptions = workItemTypes.map((type) => ({
     type,
@@ -117,21 +153,35 @@ export class App {
     return items;
   });
   readonly states = computed(() =>
-    [...new Set(this.plannedItems().map((i) => i.state))].sort(),
-  );
-  readonly assignees = computed(() =>
     [
-      ...new Map(
-        this.plannedItems().map((i) => {
-          const person = assigneeOf(i);
-          return [person.id, person] as const;
-        }),
-      ).values(),
-    ].sort((a, b) => a.name.localeCompare(b.name)),
+      ...new Set([
+        ...this.plannedItems().map((i) => i.state),
+        ...(this.filters().states ?? []),
+      ]),
+    ].sort(),
   );
-  readonly retrievalWarnings = computed(() => [
-    ...new Set(this.graph().warnings),
-  ]);
+  readonly assignees = computed(() => {
+    const people = new Map(
+      this.plannedItems().map((i) => {
+        const person = this.localizedPerson(i);
+        return [person.id, person] as const;
+      }),
+    );
+    for (const id of this.filters().assignees ?? []) {
+      if (!people.has(id))
+        people.set(id, {
+          id,
+          name:
+            id === unassignedId
+              ? this.t("unassigned")
+              : this.savedAssigneeNames()[id] || id,
+        });
+    }
+    return [...people.values()].sort((a, b) => a.name.localeCompare(b.name));
+  });
+  readonly retrievalWarnings = computed(() =>
+    uniqueMessages(this.graph().warnings),
+  );
   readonly hierarchyWarnings = computed(() => this.plan().hierarchyWarnings);
   readonly hasFilters = computed(
     () =>
@@ -147,7 +197,7 @@ export class App {
   async initialize() {
     const version = ++this.generation;
     this.loading.set(true);
-    this.error.set("");
+    this.error.set(null);
     try {
       const teams = await this.repository.teams();
       if (version !== this.generation) return;
@@ -160,16 +210,27 @@ export class App {
       }
     } catch (e) {
       if (version === this.generation) {
-        this.error.set("チーム一覧: " + errorMessage(e));
+        this.error.set({ cause: e, stage: "teamsStage" });
         this.loading.set(false);
       }
     }
   }
   async changeTeam(id: string) {
     const version = ++this.generation;
+    if (id !== this.preferenceTeam) {
+      const saved = this.preferences.read(id);
+      this.savedAssigneeNames.set(saved.assigneeNames);
+      this.filters.update((f) => ({
+        ...f,
+        types: saved.types,
+        states: saved.states,
+        assignees: saved.assignees,
+      }));
+      this.preferenceTeam = id;
+    }
     this.teamId.set(id);
     this.loading.set(true);
-    this.error.set("");
+    this.error.set(null);
     this.graph.set({ items: [], seedIds: [], warnings: [] });
     this.sprints.set([]);
     this.settingsWarnings.set([]);
@@ -186,7 +247,7 @@ export class App {
       await this.refresh();
     } catch (e) {
       if (version === this.generation) {
-        this.error.set("Sprint・Area設定: " + errorMessage(e));
+        this.error.set({ cause: e, stage: "settingsStage" });
         this.loading.set(false);
       }
     }
@@ -203,13 +264,11 @@ export class App {
       return;
     }
     const version = ++this.generation;
-    this.error.set("");
-    this.notice.set("");
+    this.error.set(null);
+    this.notice.set(null);
     this.graph.set({ items: [], seedIds: [], warnings: [] });
     if (this.range()[0] > this.range()[1]) {
-      this.error.set(
-        "範囲エラー: 開始Sprintは終了Sprint以前を選択してください。",
-      );
+      this.error.set({ range: true });
       this.loading.set(false);
       return;
     }
@@ -234,7 +293,7 @@ export class App {
         ),
       );
     } catch (e) {
-      if (version === this.generation) this.error.set(errorMessage(e));
+      if (version === this.generation) this.error.set({ cause: e });
     } finally {
       if (version === this.generation) this.loading.set(false);
     }
@@ -246,6 +305,7 @@ export class App {
   }
   updateFilter<K extends keyof Filters>(key: K, value: Filters[K]) {
     this.filters.update((f) => ({ ...f, [key]: value }));
+    if (key !== "search") this.saveFilters();
   }
   toggleType(type: WorkItemType) {
     this.filters.update((f) => ({
@@ -254,6 +314,7 @@ export class App {
         ? f.types.filter((t) => t !== type)
         : [...f.types, type],
     }));
+    this.saveFilters();
     if (type === "Epic" && this.includeEpics()) void this.refresh();
   }
   checked(key: "states" | "assignees", value: string) {
@@ -269,14 +330,24 @@ export class App {
         : [...current, value];
       return { ...f, [key]: next.length === available.length ? null : next };
     });
+    this.saveFilters();
+  }
+  private saveFilters() {
+    if (!this.teamId()) return;
+    const saved = this.preferences.save(
+      this.teamId(),
+      this.filters(),
+      this.assignees(),
+    );
+    this.savedAssigneeNames.set(saved.assigneeNames);
   }
   filterCaption(key: "states" | "assignees") {
     const selected = this.filters()[key];
     return selected === null
-      ? "すべて"
+      ? this.t("all")
       : selected.length
-        ? `${selected.length}件選択`
-        : "選択なし";
+        ? this.t("selected", { count: selected.length })
+        : this.t("noneSelected");
   }
   isExpanded(row: Row) {
     return row.members.some((n) => this.expanded().has(n.item.id));
@@ -336,14 +407,20 @@ export class App {
     return [
       ...new Map(
         members.map((n) => {
-          const p = assigneeOf(n.item);
+          const p = this.localizedPerson(n.item);
           return [p.id, p] as const;
         }),
       ).values(),
     ].filter((person) => person.id !== unassignedId);
   }
+  private localizedPerson(item: PlanNode["item"]): Assignee {
+    const person = assigneeOf(item);
+    return person.id === unassignedId
+      ? { ...person, name: this.t("unassigned") }
+      : person;
+  }
   personOf(node: PlanNode) {
-    return assigneeOf(node.item);
+    return this.localizedPerson(node.item);
   }
   memberIds(row: Row) {
     return row.members.map((n) => n.item.id).join(" ");
@@ -381,9 +458,17 @@ export class App {
     if (!members.every((n) => n.item.type === "Task")) return "";
     const p = this.progress(members);
     return p.percent === null
-      ? "完了率: Original Estimateが未設定または0のため計算しません。"
-      : `完了率 ${p.label}（当初見積 ${p.original}、残作業 ${p.remaining}）。${p.partial ? "見積・残作業が揃う項目だけで算出。未設定 " + p.missingCount + "件。" : ""}`;
+      ? this.t("progressUnavailable")
+      : this.t("progressDetails", {
+          value: p.label,
+          original: p.original,
+          remaining: p.remaining,
+        }) +
+          (p.partial
+            ? this.t("partialProgress", { count: p.missingCount })
+            : "");
   }
+
   rowTooltip(row: Row) {
     return row.members.map((n) => this.tooltip(n)).join("\n\n");
   }
@@ -409,16 +494,32 @@ export class App {
     const names = n.activeSprints
       .map((i) => this.sprints()[i]?.name)
       .join(", ");
-    return `${n.item.type} #${n.item.id}: ${n.item.title}\n状態: ${n.item.state} / 担当: ${n.item.assignedTo || "未割当"}\n自身のIteration: ${n.item.iterationPath}\n既知の期間: ${n.interval ? this.sprints()[n.interval[0]]?.start + " ～ " + this.sprints()[n.interval[1]]?.finish : "未計画"}\n集約元Sprint: ${names}${n.item.type === "Task" ? "\n" + this.progressTitle([n]) : ""}\n取得した子TaskとUS・Bug自身の有効Sprintを集約。範囲外の子Taskは未取得。`;
+    return [
+      n.item.type + " #" + n.item.id + ": " + n.item.title,
+      this.t("tooltipState", {
+        state: n.item.state,
+        name: this.personOf(n).name,
+      }),
+      this.t("tooltipIteration", { path: n.item.iterationPath }),
+      this.t("tooltipPeriod", {
+        period: n.interval
+          ? this.sprints()[n.interval[0]]?.start +
+            " ～ " +
+            this.sprints()[n.interval[1]]?.finish
+          : this.t("unplanned"),
+      }),
+      this.t("tooltipSprints", { names }),
+      ...(n.item.type === "Task" ? [this.progressTitle([n])] : []),
+      this.t("tooltipScope"),
+    ].join("\n");
   }
+
   async open(id: number) {
     try {
       await this.repository.openItem(id);
-      if (this.mock) this.notice.set(`モック: Work Item #${id} を開きました。`);
+      if (this.mock) this.notice.set(message("mockOpened", { id }));
     } catch {
-      this.notice.set(
-        "Work Itemフォームを開けませんでした。再試行してください。",
-      );
+      this.notice.set(message("openFailed"));
     }
   }
 }

@@ -1,5 +1,6 @@
 import { Component, input, signal } from "@angular/core";
 import { Assignee } from "../domain/model";
+import { unassignedId } from "../domain/assignee";
 @Component({
   selector: "app-assignee-avatar",
   standalone: true,
@@ -53,7 +54,7 @@ export class AssigneeAvatar {
   readonly person = input.required<Assignee>();
   readonly failedUrl = signal<string | undefined>(undefined);
   initials() {
-    return this.person().name === "未割当"
+    return this.person().id === unassignedId
       ? "–"
       : this.person()
           .name.trim()

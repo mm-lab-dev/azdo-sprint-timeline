@@ -72,3 +72,15 @@ npm run package:vsix
 [実装計画](implementation-plan.md) / [受け入れ結果](acceptance.md) / [決定記録](decisions.md)
 
 モック用アバターは`npm run assets:avatars`で再生成します。SVG原本は配布対象外の`resources/avatar-sources/`、配布用PNGは`src/assets/avatars/`に置きます。MarketplaceはSVGファイルの同梱を受け付けないため、パッケージ生成前に混入を検出します。
+
+## 言語切替
+
+日本語・英語の辞書とメッセージ型は`src/app/i18n/messages.ts`、画面の言語状態は`localization.ts`に置きます。初期言語はSDKの`getPageContext().globalization.culture`、取得できなければブラウザー言語を使います。自動モードの未対応言語は英語です。手動設定はブラウザーのlocalStorageに言語コードだけを保存し、ストレージが使えなくても切替を継続します。
+
+診断は翻訳キーとパラメーターで保持し、取得後に言語を切り替えても再取得せず表示を更新します。Work Itemのタイトル・状態・Sprint名などの元データは翻訳しません。テストは辞書のキー・埋込値、日本語/英語、SDK言語、選択状態の維持、保存不可環境、初期化エラーと既取得の警告の切替を確認します。既存UIテストと掲載画像生成は日本語ロケールを明示し、表示を再現可能にします。
+
+## フィルターの保存
+
+`src/app/preferences/filter-preferences.ts`で表示種類・状態・担当者を保存します。SDKのhost/project/userのIDとTeam IDでキーを分離し、初回の取得前に復元します。Epicも初回から取得対象へ反映します。検索・Sprint範囲・展開状態は保存しません。保存はバージョン付きJSONで、全選択はnull、全解除は空配列です。担当者は選択したIDと表示名だけを記録し、画像URLやWork Item本文は保存しません。
+
+範囲内にいない選択肢も設定とチェック欄に保持し、全選択・全解除から変更できます。JSON破損・未対応スキーマは初期値へ戻し、不正なフィールドは検証します。ストレージが利用できない場合は同じタブ内のメモリーでTeamごとの選択を維持します。

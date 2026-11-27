@@ -1,3 +1,4 @@
+import { Diagnostic, message, uniqueMessages } from "../i18n/messages";
 import {
   Area,
   Filters,
@@ -86,7 +87,7 @@ export function buildPlan(
 ): Plan {
   const isBoundary = (item: Item) =>
     item.type === (options.includeEpics ? "Epic" : "Feature");
-  const hierarchyWarnings: string[] = [];
+  const hierarchyWarnings: Diagnostic[] = [];
   const all = new Map(graph.items.map((i) => [i.id, i]));
   const retained = new Map<number, Item>();
   for (const id of graph.seedIds) {
@@ -126,9 +127,7 @@ export function buildPlan(
     while (cursor !== undefined && nodes.has(cursor) && !done.has(cursor)) {
       if (chain.has(cursor)) {
         broken.add(cursor);
-        hierarchyWarnings.push(
-          `親子循環: #${cursor} の親リンクを切断しました。`,
-        );
+        hierarchyWarnings.push(message("hierarchyCycle", { id: cursor }));
         break;
       }
       chain.add(cursor);
@@ -154,19 +153,23 @@ export function buildPlan(
           node.item.type === "Task")
       ))
         hierarchyWarnings.push(
-          `想定外の階層: #${parent.item.id} → #${node.item.id}`,
+          message("unexpectedHierarchy", {
+            parent: parent.item.id,
+            child: node.item.id,
+          }),
         );
     } else {
       node.orphan = !!parentId;
       if (node.orphan)
-        hierarchyWarnings.push(
-          `親未取得: #${node.item.id}（欠損・権限・別プロジェクト・循環）`,
-        );
+        hierarchyWarnings.push(message("missingParent", { id: node.item.id }));
       roots.push(node);
     }
     if (!workItemTypes.includes(node.item.type as WorkItemType))
       hierarchyWarnings.push(
-        `対象外タイプを祖先として保持: #${node.item.id} ${node.item.type}`,
+        message("unsupportedAncestor", {
+          id: node.item.id,
+          type: node.item.type,
+        }),
       );
   }
   const sprintIndex = new Map(
@@ -206,8 +209,8 @@ export function buildPlan(
   }
   return {
     roots,
-    warnings: [...new Set([...graph.warnings, ...hierarchyWarnings])],
-    hierarchyWarnings: [...new Set(hierarchyWarnings)],
+    warnings: uniqueMessages([...graph.warnings, ...hierarchyWarnings]),
+    hierarchyWarnings: uniqueMessages(hierarchyWarnings),
   };
 }
 interface DisplayGroup {

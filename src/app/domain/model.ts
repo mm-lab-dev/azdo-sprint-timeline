@@ -1,3 +1,4 @@
+import type { Diagnostic } from "../i18n/messages";
 export interface Sprint {
   id: string;
   name: string;
@@ -63,18 +64,18 @@ export interface PlanNode {
 }
 export interface Plan {
   roots: PlanNode[];
-  warnings: string[];
-  hierarchyWarnings: string[];
+  warnings: Diagnostic[];
+  hierarchyWarnings: Diagnostic[];
 }
 export interface GraphResult {
   items: Item[];
   seedIds: number[];
-  warnings: string[];
+  warnings: Diagnostic[];
 }
 export interface TeamSettings {
   sprints: Sprint[];
   areas: Area[];
-  warnings: string[];
+  warnings: Diagnostic[];
 }
 export interface Filters {
   search: string;

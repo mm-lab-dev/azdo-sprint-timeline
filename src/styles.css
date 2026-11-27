@@ -120,6 +120,17 @@ h1 {
   background: #6a9a83;
   border-radius: 50%;
 }
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.language-picker select {
+  min-width: 110px;
+  max-width: 130px;
+  height: 34px;
+  font-size: 11px;
+}
 .control-panel,
 .timeline-panel {
   background: var(--surface);

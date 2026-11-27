@@ -1,3 +1,4 @@
+import { message } from "../i18n/messages";
 import { items, sprints, teams } from "../../../fixtures/mock";
 import { largeItems, largeSprints } from "../../../fixtures/large";
 import { GraphResult, Sprint, TeamSettings } from "../domain/model";
@@ -232,10 +233,7 @@ export class MockRepository implements PlanRepository {
         this.scenario === "empty"
           ? []
           : seedItems(data, "Demo", settings.areas, selected).map((i) => i.id),
-      warnings:
-        this.scenario === "partial"
-          ? ["部分取得: 一部の項目を取得できませんでした。"]
-          : [],
+      warnings: this.scenario === "partial" ? [message("mockPartial")] : [],
     };
   }
   async openItem(id: number) {

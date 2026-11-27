@@ -39,3 +39,11 @@
 - 完了率の数値・塗り・ツールチップはTaskだけに表示する。Epic・Feature・US・Bugの工数集約値は内部で保持するが、進捗表示には使わない。
 - BugはUSと同じ扱いとし、Feature → Bug → Taskを通常の階層に追加する。Bug自身の有効Sprintと子TaskのSprintを集約し、未計画Bugも子Taskを起点に保持する。既定の表示種類にもBugを含める。
 - [公式のBug表示設定](https://learn.microsoft.com/en-us/azure/devops/organizations/settings/show-bugs-on-backlog)には要件・Taskとして扱う選択肢があるが、この拡張では利用者の指定に従いUSと同列を基準とする。実際の親子リンクは保持し、標準外の関係も取得できるものを表示する。
+
+## 言語設定
+
+日本語・英語と自動判定を用意する。保存された明示選択を優先し、自動時はSDKの[GlobalizationContext.culture](https://learn.microsoft.com/en-us/javascript/api/azure-devops-extension-sdk/globalizationcontext)を参照、取得できなければブラウザー言語、未対応なら英語にする。言語変更は取得・集約・フィルター条件を変えない。警告やエラーは表示時に翻訳し、元データのタイトル・状態名は保持する。言語コードだけをlocalStorageへ保存し、保存を拒否されても動作する。
+
+## フィルター設定の永続化
+
+表示種類・状態・担当者の選択をブラウザーに保存する。組織・プロジェクト・利用者・TeamのIDで分離し、検索・期間・展開状態は永続化しない。担当者は範囲外でも選択を確認できるよう、選択したIDと表示名を保存する。全選択nullと全解除[]を区別し、現在の取得結果にない選択肢は削除しない。保存不可でも操作を継続し、同じタブ内では設定を保持する。

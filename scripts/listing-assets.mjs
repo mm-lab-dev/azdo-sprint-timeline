@@ -24,8 +24,10 @@ try {
     viewport: { width: 1440, height: 1200 },
     deviceScaleFactor: 1,
     colorScheme: "light",
+    locale: "ja-JP",
     reducedMotion: "reduce",
   });
+  page.setDefaultTimeout(15000);
   await page.goto(
     new URL(
       "?scenario=bugs",
@@ -53,6 +55,7 @@ try {
     fullPage: true,
     animations: "disabled",
   });
+  await page.getByLabel("Language / 言語", { exact: true }).selectOption("en");
   await page.emulateMedia({ colorScheme: "dark" });
   await page.screenshot({
     path: "resources/readme/dark.png",

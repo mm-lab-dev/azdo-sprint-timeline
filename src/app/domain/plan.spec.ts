@@ -1,3 +1,4 @@
+import { formatMessage } from "../i18n/messages";
 import { items, sprints } from "../../../fixtures/mock";
 import {
   buildPlan,
@@ -229,9 +230,11 @@ describe("受け入れ条件: Sprint期間集約", () => {
     );
     expect(visibleRows(p, filters, new Set([1, 2, 3]))).toHaveLength(2);
     expect(find(p, 2)).toBeDefined();
-    expect(p.warnings.join(" ")).toMatch(/循環/);
-    expect(p.warnings.join(" ")).toMatch(/親未取得/);
-    expect(p.warnings.join(" ")).toMatch(/対象外/);
+    expect(p.warnings.map((w) => formatMessage(w)).join(" ")).toMatch(/循環/);
+    expect(p.warnings.map((w) => formatMessage(w)).join(" ")).toMatch(
+      /親未取得/,
+    );
+    expect(p.warnings.map((w) => formatMessage(w)).join(" ")).toMatch(/対象外/);
   });
   test("別プロジェクト親を保持しない", () => {
     const base = items[1];
@@ -248,7 +251,7 @@ describe("受け入れ条件: Sprint期間集約", () => {
       [1, 3],
     );
     expect(p.roots.map((n) => n.item.id)).toEqual([10]);
-    expect(p.warnings.join()).toMatch(/親未取得/);
+    expect(p.warnings.map((w) => formatMessage(w)).join()).toMatch(/親未取得/);
   });
   test("A11 日数が異なっても絶対Sprintインデックスで集約", () => {
     expect(find(buildPlan(graph(), sprints, [1, 3]), 102).interval).toEqual([

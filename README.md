@@ -19,7 +19,7 @@ Open an Agile project and choose **Boards → Sprint Timeline**. Select a **Team
 - Items of the same type, with the same actual parent and exactly the same title, share a row. Select the row or bar to choose an original Work Item and open its Azure DevOps form.
 - Bars show avatars for assigned people; unassigned items have no bar icon. Only Task bars show a small completion percentage: **(Original Estimate − Remaining Work) / Original Estimate × 100**. Epic, Feature, Story, and Bug bars do not show progress. Values below 0% or above 100% are shown as calculated. Missing or zero estimates produce no percentage; an asterisk marks a partial estimate.
 
-The timeline follows Azure DevOps light and dark themes. The interface currently uses Japanese labels.
+The timeline follows Azure DevOps light and dark themes. Use the language menu at the top right to choose **日本語**, **English**, or **Automatic**. Automatic follows your Azure DevOps display culture, falling back to the browser language; unsupported languages use English. Switching languages preserves your current plan and filters. Your language preference is saved in this browser when storage is available.
 
 ![Sprint Timeline in dark mode](https://raw.githubusercontent.com/mm-lab-dev/azdo-sprint-timeline/main/resources/readme/dark.png)
 
@@ -35,7 +35,7 @@ The plan covers the selected team's Areas and Sprint range. Tasks outside that r
 
 Supports **Azure DevOps Services**, one project and team at a time, and the standard **Agile** Epic → Feature → User Story / Bug → Task hierarchy. Scrum, Basic, and custom work item types are not supported.
 
-The extension requests read-only Work Item and project access. It does not modify Work Items, require a PAT, persist Work Item data or tokens, send work data to an external backend, or collect telemetry.
+The extension requests read-only Work Item and project access. It does not modify Work Items, require a PAT, cache Work Item contents or tokens, send work data to an external backend, or collect telemetry. Language and filter preferences are stored only in your browser, including the IDs and display names of selected assignees.
 
 For help, [report an issue](https://github.com/mm-lab-dev/azdo-sprint-timeline/issues). See the [changelog](https://github.com/mm-lab-dev/azdo-sprint-timeline/blob/main/CHANGELOG.md) for updates.
 

@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.1
+
+- Add Japanese/English switching, automatic language detection, and a remembered language preference.
+- Remember type, state, and assignee filters per organization, project, user, and team in the browser.
+- Preserve selected filters when items are outside the current Sprint range, and keep the UI usable when browser storage is blocked.
+
 ## 0.3.0
 
 - Refresh the layout, controls, and light/dark themes, with a compact layout for narrow screens.

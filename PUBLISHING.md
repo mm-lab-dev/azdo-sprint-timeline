@@ -1,4 +1,4 @@
-# 0.3.0 public release preparation
+# 0.3.1 public release preparation
 
 Extension ID: `azdo-sprint-timeline`. Display name: **Sprint Timeline**. Publisher: `mm-lab`.
 
@@ -12,7 +12,7 @@ The manifest is prepared for a public Marketplace listing (`public:true`). No re
 npm run package:vsix
 ```
 
-This generates `artifacts/mm-lab.azdo-sprint-timeline-0.3.0.vsix`. The default publisher is taken from the manifest. Use `AZDO_PUBLISHER` only when building for a different authorized publisher.
+This generates `artifacts/mm-lab.azdo-sprint-timeline-0.3.1.vsix`. The default publisher is taken from the manifest. Use `AZDO_PUBLISHER` only when building for a different authorized publisher.
 
 Review the README, listing images, icon, MIT license, third-party notices, and [verification record](TESTING.md). The package contains production web assets and listing documentation. Tests, fixtures, dependency directories, caches, credentials, customer organization names, and local absolute paths are excluded. README images use absolute public GitHub URLs; push the updated screenshots to `main` before uploading the VSIX so the listing shows the matching UI.
 
@@ -41,7 +41,7 @@ An optional CLI alternative, when publishing has been explicitly authorized:
 ```powershell
 npx tfx extension publish `
   --publisher mm-lab `
-  --vsix artifacts/mm-lab.azdo-sprint-timeline-0.3.0.vsix `
+  --vsix artifacts/mm-lab.azdo-sprint-timeline-0.3.1.vsix `
   --auth-type pat
 ```
 

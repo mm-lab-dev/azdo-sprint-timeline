@@ -12,6 +12,7 @@ export default defineConfig({
   retries: 0,
   reporter: [["list"], ["html", { open: "never" }]],
   use: {
+    locale: "ja-JP",
     baseURL,
     browserName: "chromium",
     trace: "retain-on-failure",

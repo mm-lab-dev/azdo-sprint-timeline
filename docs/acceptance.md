@@ -1,6 +1,6 @@
 # 実装結果・受け入れ確認
 
-検証日: 2026-11-27。0.1.0の実組織インストール後にTeamが空になる報告を受け、ブラウザー標準fetchの呼び出し不具合をローカルで再現・修正。修正後、利用者から実組織でのTeam選択・タイムライン表示の成功報告あり。0.3.0の全項目の実組織スモークは未実施です。
+検証日: 2026-11-27。0.1.0の実組織インストール後にTeamが空になる報告を受け、ブラウザー標準fetchの呼び出し不具合をローカルで再現・修正。修正後、利用者から実組織でのTeam選択・タイムライン表示の成功報告あり。0.3.1の全項目の実組織スモークは未実施です。
 
 ## 自動検証
 
@@ -23,7 +23,7 @@
 
 US自身が未計画の場合も、子Taskだけから実行期間を算出する単体ケースを含めています。Taskを取得・集約するためにUS自身のIterationを起点条件に要求しません。
 
-実行コマンド: `npm test -- --coverage`（48件）、`npm run test:e2e`（25件）、`npm run lint`、`npm run format:check`、`npm run package:vsix`。最終実行結果は全て成功。Angular strictTemplates/TypeScript strictでビルドしています。
+実行コマンド: `npm test -- --coverage`（67件）、`npm run test:e2e`（37件）、`npm run lint`、`npm run format:check`、`npm run package:vsix`。最終実行結果は全て成功。Angular strictTemplates/TypeScript strictでビルドしています。
 
 REST取得は7.1の実JSON応答形（配列のcount/valueラップを含む）をHTTP層からrepositoryまで通すテストで検証しています。これは実組織への接続成功を示すものではありません。
 
@@ -33,7 +33,7 @@ REST取得は7.1の実JSON応答形（配列のcount/valueラップを含む）�
 - Chromiumの1000行全展開・検索: 各約0.5秒。DOMの仮想化は未導入。ハードウェア・ブラウザー・負荷により変動します。
 - 正確な測定値は`artifacts/performance-domain.json`と`artifacts/performance-ui.json`。
 - ライト/ダーク画面: `artifacts/mock-light.png`、`artifacts/mock-dark.png`。画像を目視確認。
-- VSIX: `artifacts/mm-lab.azdo-sprint-timeline-0.3.0.vsix`。Bug対応と画面刷新を含み、同梱画像はPNG。表示名はSprint Timeline、publisherは`mm-lab`、一般公開用`public:true`。配布先組織の指定なし。今回の作業ではMarketplaceへのアップロード・公開は行っていません。
+- VSIX: `artifacts/mm-lab.azdo-sprint-timeline-0.3.1.vsix`。Bug対応と画面刷新を含み、同梱画像はPNG。表示名はSprint Timeline、publisherは`mm-lab`、一般公開用`public:true`。配布先組織の指定なし。今回の作業ではMarketplaceへのアップロード・公開は行っていません。
 - VSIXには配布用dist、掲載用README・画像・関連文書、MITライセンス・第三者表記、拡張manifestを含めます。node_modules・テストコード・トークンは含めません。
 
 ## 残る検証と制限
@@ -48,3 +48,9 @@ REST取得は7.1の実JSON応答形（配列のcount/valueラップを含む）�
 - BugをWIQLの起点に含め、未計画Bugも子Taskから保持。Feature → Bug → Taskを警告なく集約し、階層の省略・同種同タイトルの統合・フォーム遷移を単体/E2Eで確認。
 - 未割当をバーのアイコン数から除外し、未割当フィルターは維持。進捗の数値・塗り・ツールチップがTask以外に出ないことをE2Eで確認。
 - ライト/ダークの掲載画像をモックデータで更新し、目視確認。狭い画面でも横軸は等幅Sprintのまま、チャート内で横スクロールする。
+
+## 0.3.1の追加確認
+
+- 日本語/英語の切替、SDKのculture優先、未対応言語の英語へのフォールバック、言語の保存、ストレージ拒否時の動作、既取得の警告とエラーの再翻訳を単体/E2Eで確認。
+- 表示種類・状態・担当者の保存と復元、全選択/全解除の区別、範囲外の選択肢の保持、Team別設定とSDKの組織・利用者による分離を確認。検索は永続化しない。
+- 担当者の保存は選択したIDと表示名だけ。Work Item本文や認証情報は保存しない。保存不可の場合も同じタブ内で設定を保持する。
