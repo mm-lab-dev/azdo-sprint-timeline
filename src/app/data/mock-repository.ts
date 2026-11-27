@@ -56,7 +56,7 @@ export class MockRepository implements PlanRepository {
               id: 207,
               iterationPath: sprints[2].path,
               assignedTo: "Ren",
-              assignedToAvatar: "assets/avatars/ren.svg",
+              assignedToAvatar: "assets/avatars/ren.png",
               state: "Closed",
             },
             {
@@ -70,7 +70,7 @@ export class MockRepository implements PlanRepository {
               id: 107,
               iterationPath: sprints[2].path,
               assignedTo: "Mina",
-              assignedToAvatar: "assets/avatars/mina.svg",
+              assignedToAvatar: "assets/avatars/mina.png",
               state: "New",
             },
             {
@@ -94,7 +94,7 @@ export class MockRepository implements PlanRepository {
               title: "独立した計画",
               iterationPath: sprints[3].path,
               assignedTo: "Ren",
-              assignedToAvatar: "assets/avatars/ren.svg",
+              assignedToAvatar: "assets/avatars/ren.png",
             },
             {
               ...base(201),

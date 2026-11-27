@@ -1,6 +1,6 @@
 {
   "name": "azdo-sprint-timeline",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "private": true,
   "displayName": "Sprint Timeline",
   "description": "A read-only Azure Boards Sprint timeline aggregated from child Tasks.",
@@ -21,6 +21,7 @@
   "scripts": {
     "start:mock": "node scripts/angular.mjs serve --host 127.0.0.1 --port 4200",
     "assets:listing": "node scripts/listing-assets.mjs",
+    "assets:avatars": "node scripts/avatar-assets.mjs",
     "build": "node scripts/angular.mjs build --base-href ./",
     "lint": "eslint . --max-warnings 0",
     "format": "prettier --write src fixtures e2e docs scripts *.json *.md *.mjs *.cjs *.ts",

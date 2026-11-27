@@ -2,7 +2,7 @@
   "manifestVersion": 1,
   "id": "azdo-sprint-timeline",
   "publisher": "mm-lab",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "name": "Sprint Timeline",
   "description": "Read-only Sprint timeline for Epics, Features, User Stories and Tasks, with periods aggregated from child Tasks.",
   "public": true,

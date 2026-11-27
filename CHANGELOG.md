@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.2
+
+- Replace bundled SVG avatars with PNG images to fix Marketplace validation.
+
 ## 0.2.1
 
 - Repackage 0.2.0 with a new version for Marketplace upload; application behavior is unchanged.

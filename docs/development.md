@@ -70,3 +70,5 @@ npm run package:vsix
 `src/app/domain`は純粋な抽出・集約・表示関数、`data`はrepository、`core/azure-devops`はSDK/HTTP、`features/execution-plan`はSignalsベースのUIです。PrimeNGは検索入力とテーマに使用します。
 
 [実装計画](implementation-plan.md) / [受け入れ結果](acceptance.md) / [決定記録](decisions.md)
+
+モック用アバターは`npm run assets:avatars`で再生成します。SVG原本は配布対象外の`resources/avatar-sources/`、配布用PNGは`src/assets/avatars/`に置きます。MarketplaceはSVGファイルの同梱を受け付けないため、パッケージ生成前に混入を検出します。

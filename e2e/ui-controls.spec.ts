@@ -158,7 +158,7 @@ test("複数状態・複数担当者のチェック、全解除、全選択を�
 });
 
 test("担当者画像を表示し、取得失敗時は頭文字へ切り替える", async ({ page }) => {
-  await page.route("**/assets/avatars/ren.svg", (route) => route.abort());
+  await page.route("**/assets/avatars/ren.png", (route) => route.abort());
   await page.goto("/");
   await range(page);
   const aki = page

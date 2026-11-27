@@ -2,7 +2,7 @@
 
 Local verification: 2026-11-27, version 0.2.0, Windows, Node.js 22.23.4, npm 10, Chromium.
 
-Version 0.2.1 repackages the same application with updated release metadata. Production build and VSIX version consistency were checked again.
+Marketplace rejected version 0.2.1 because bundled SVG files are unsupported. Version 0.2.2 replaces mock avatar assets with PNG and keeps SVG source artwork outside the package. Unit/E2E tests, static checks, production build, and VSIX contents were checked again; the package preflight was also verified to reject an SVG file. Marketplace validation of 0.2.2 remains pending.
 
 - 46 unit tests: extraction, Sprint aggregation, hierarchy projection, row grouping, effort calculations, REST response mapping, batching, and retries.
 - 23 Playwright tests: mock UI, checkbox filters, merged rows, avatars, completion percentages, Task-free Story hatching, themes, errors, response races, performance, and real-SDK iframe startup with synthetic host/API responses.

@@ -64,7 +64,7 @@ const item = (
   parentId,
   assignedTo,
   assignedToAvatar: ["Aki", "Ren", "Mina"].includes(assignedTo)
-    ? `assets/avatars/${assignedTo.toLowerCase()}.svg`
+    ? `assets/avatars/${assignedTo.toLowerCase()}.png`
     : undefined,
   iterationPath: sprint === null ? "Demo" : `Demo\\Sprint ${sprint}`,
   areaPath,
