@@ -14,7 +14,12 @@ test("10Sprint / 1000行の集約・可視行変換を実測", () => {
     const p = buildPlan(graph, largeSprints, [0, 9]);
     const rows = visibleRows(
       p,
-      { search: "", state: "", assignee: "", mode: "all" },
+      {
+        search: "",
+        types: ["Feature", "User Story", "Task"],
+        states: null,
+        assignees: null,
+      },
       expanded,
     );
     timings.push(performance.now() - start);

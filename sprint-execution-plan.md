@@ -43,6 +43,8 @@ Work Item                   Sprint 1   Sprint 2   Sprint 3
 
 ## 5. 抽出・集約ルール（最重要）
 ### 5.1 抽出対象
+既定の上端はFeatureとし、Epic選択時はEpicを上端とする。選択に応じた上端で祖先の取得・探索を終了し、それより上の祖先は表示・警告しない。その他の欠損・想定外階層でも、取得できるUS/Taskは保持する。
+
 選択したチームのArea Path設定（includeChildrenを考慮）と、選択Sprintの正確なIteration Pathに一致するUS/Taskを起点（seed）とする。プロジェクト直下のIteration、未設定、日付なしの未計画項目は起点にしない。Featureは所属Sprintに関係なく必要な祖先だけ追加する。状態がClosed/Doneでも既定では除外しない。祖先はArea Path・Iteration・状態が起点条件外でも表示に必要なら同一プロジェクト内で取得する。
 
 例: US1がSprint1、Task AがSprint1、Task BがSprint2、Task Cが未計画の場合、Sprint1–2選択時はUS1、A、Bを表示しCを除外。Sprint2のみ選択でもUS1とBを表示する。親にアクセスできない場合、起点を落とさず「親未取得」グループへ置き警告する。異なるプロジェクトの親はMVPで辿らない。
@@ -177,3 +179,13 @@ interface PlanNode { item: Item; children: PlanNode[]; activeSprints: number[]; 
 - REST API: https://learn.microsoft.com/en-us/rest/api/azure/devops/
 
 仮称、初期4Sprint、閲覧専用、単一チーム、Agileプロセス、範囲内Task集約は本企画の暫定設計判断。実組織のカスタムWork Itemタイプ、Area構成、publisher、公開方針は未確認。SDK/RESTの実接続・VSIXのインストールは本書作成時点で未検証であり、Codex実装時に確認すること。
+## 13. 表示・集約UIの追加仕様
+
+- 表示種類をEpic / Feature / US / Taskのチェックボックスで複数選択する。既定はFeature / US / Task。Epic選択時だけEpicまで祖先を取得し、非選択の中間階層は飛ばして表示する。起点は従来どおり選択Sprint内のUS/Taskとし、元の期間集約は表示選択で変更しない。
+- 同種・同じ実親・タイトル完全一致のWork Itemを表示上1行に統合する。親なし同士も対象。表示上の親が同じでも実親が異なれば統合しない。各項目のID・担当者・状態・Sprint・期間を保持し、セルが表す個別項目に遷移できるようにする。
+- 状態と担当者もチェックボックス複数選択。項目間はOR、フィルター間はAND。全選択・全解除を用意し、全解除は一致なしとする。未割当担当者を選択可能にする。
+- バーに担当者画像を表示し、画像が取れなければ頭文字を表示する。画像URLと担当者情報は実行中のみ保持する。
+- 色はEpicがオレンジ、Featureが紫、USが水色、Taskがくすんだ黄色。Epicの文字アイコンはE。状態Activeは青、Close/Closedは緑。検索欄の背景・文字は他の入力欄と同じテーマに合わせる。
+- バーの端に小さく完了率 `(Original Estimate − Remaining Work) / Original Estimate × 100` を表示する。親は取得したTaskの工数を加算し、統合行も元項目の集約値を加算する。負値・100%超を丸め込まない。見積が未設定または0なら割合を表示しない。不足項目を除いた参考値は*と説明で区別する。
+- TaskのないUSも自身のSprintを斜線で表示する。Epic・Feature・US・統合行は取得した子孫Taskの所属Sprintで斜線を判定し、表示階層の省略やフィルターで変えない。
+- 追加機能の検証後、0.2.0としてREADME・変更履歴・掲載画像を更新し、VSIXを生成する。

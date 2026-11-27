@@ -1,51 +1,42 @@
 # Sprint Timeline
 
-See your Azure Boards execution plan in Sprint-sized columns. Follow Features, User Stories, and Tasks across Sprints, with Story periods aggregated from their child Tasks—even when a Story's own Iteration Path is unplanned or assigned to another Sprint. The extension is read-only.
+View your Azure Boards work across Sprints. Sprint Timeline brings Epics, Features, User Stories, and Tasks into one read-only timeline, with one equal-width column per Sprint.
 
-<img src="resources/readme/overview.png" width="960" alt="A Sprint timeline showing Features, User Stories, and Tasks across three equal-width Sprint columns, with a hatched gap between Tasks in Sprint 1 and Sprint 3">
+A Story's period includes its child Tasks' Sprints, even when the Story itself is unplanned or assigned to a different Sprint.
 
-_Synthetic demo data. Each Sprint occupies one column, regardless of its duration._
-
-## Explore an execution plan
-
-### Follow the work across Sprints
-
-Select a team and a start/end Sprint. Expand a Feature to see its Stories, then expand a Story to see its Tasks. Use **Task非表示** to hide Task rows or **USのみ** to focus on Stories.
-
-A Task occupies its assigned Sprint. A Story spans the earliest through latest Sprint represented by its fetched Tasks and its own valid Sprint assignment. A Feature inherits the periods of its Stories; its own Iteration Path does not determine the bar.
-
-When Tasks exist in Sprint 1 and Sprint 3, the Story spans all three columns and marks Sprint 2 with hatching. Arrows indicate known continuation beyond the selected range. Dates appear only as supplementary column labels; the axis has no daily, weekly, or monthly scale.
-
-### Find the items you need
-
-Search by ID or title, or filter by state and assignee. Matching items keep their ancestors, and hidden children continue to contribute to the aggregated period. Collapsing rows and changing display modes also preserve the period.
-
-Select a bar or item ID to open the Work Item form in Azure DevOps. The interface supports keyboard navigation and follows the host's light/dark theme.
-
-<img src="resources/readme/dark.png" width="960" alt="The same synthetic Sprint plan displayed with a dark background and distinct Feature, Story, and Task colors">
+![Sprint Timeline with synthetic demo data](https://raw.githubusercontent.com/mm-lab-dev/azdo-sprint-timeline/main/resources/readme/overview.png)
 
 ## Install and open
 
-The extension ID is `azdo-sprint-timeline`; its display name is **Sprint Timeline**. See the [Changelog](CHANGELOG.md) for updates.
+Install [Sprint Timeline from Visual Studio Marketplace](https://marketplace.visualstudio.com/items?itemName=mm-lab.azdo-sprint-timeline) into your Azure DevOps organization. Installation requires an authorized administrator.
 
-After the public Marketplace listing is available, search for **Sprint Timeline** under Azure DevOps extensions and have an authorized organization administrator install it. Open an Agile project and choose **Boards → Sprint Timeline**. See [Publishing](PUBLISHING.md) for release preparation and the remaining verification steps.
+Open an Agile project and choose **Boards → Sprint Timeline**. Select a **Team**, a start Sprint, and an end Sprint.
 
-## What to expect
+## Explore your plan
 
-The initial scope is Azure DevOps Services, one project, one selected team, and Agile's standard Feature → User Story → Task hierarchy. The UI currently uses Japanese labels. Scrum Product Backlog Items, Basic/custom work item types, Epics, and combined multi-team plans are outside this release's scope.
+- Choose any combination of **Epic / Feature / US / Task**. Hidden levels are skipped in the tree; their work still contributes to parent periods.
+- Search by ID or title, and select multiple states or assignees with the checkbox filters.
+- Items of the same type, with the same actual parent and exactly the same title, share a row. Select the row or bar to choose an original Work Item and open its Azure DevOps form.
+- Bars show assignee avatars and a small completion percentage: **(Original Estimate − Remaining Work) / Original Estimate × 100**. Parent percentages use summed estimates and remaining work. Values below 0% or above 100% are shown as calculated. Missing or zero estimates produce no percentage; an asterisk marks a partial estimate.
 
-Only Stories and Tasks assigned to the selected Sprints and team Areas start the selection. Their required ancestors are retained, including unplanned Stories and Features. Unplanned siblings are excluded. Closed items are included by default.
+The timeline follows Azure DevOps light and dark themes. The interface currently uses Japanese labels.
 
-The timeline represents the selected-range execution plan. Tasks outside that range are not fetched or aggregated. A known out-of-range Sprint assigned to an ancestor Story can still extend its period, so the bar should not be read as the complete lifetime of all its work.
+![Sprint Timeline in dark mode](https://raw.githubusercontent.com/mm-lab-dev/azdo-sprint-timeline/main/resources/readme/dark.png)
 
-Unavailable parents, unexpected hierarchies, API limits, and partial retrievals produce warnings. Permissions and network errors have separate retryable states. Real-organization SDK startup, theme changes, and form navigation remain unverified; see [Testing](TESTING.md).
+## Read the bars
 
-## Data and permissions
+A Task occupies its assigned Sprint. A Story spans its own valid Sprint and the Sprints of its fetched child Tasks. Features and Epics inherit their descendants' periods; their own Iteration Paths do not determine their bars.
 
-The extension uses Azure DevOps SDK authentication and read-only work/project permissions. It does not update Work Items, store a PAT, send data to an external backend, or collect telemetry. Work Item data and tokens are not persisted by the extension.
+Hatching marks Sprints without fetched Tasks within an aggregated period. A Story with no fetched Tasks still appears in its own Sprint, with a hatched bar. Arrows indicate known continuation beyond the selected range. Each Sprint has the same column width, regardless of its duration.
 
-## Support and development
+The plan covers the selected team's Areas and Sprint range. Tasks outside that range and unplanned siblings are not fetched. Filtering or collapsing rows does not recalculate the periods. If some data cannot be retrieved, available items remain visible with a warning.
 
-See [Support](SUPPORT.md) for what to include in a bug report. For mock startup, tests, builds, and repository structure, see [Development](docs/development.md). Release changes are listed in the [Changelog](CHANGELOG.md).
+## Compatibility and privacy
 
-This is an independent project and is not affiliated with or endorsed by Microsoft. Licensed under the [MIT License](LICENSE). See [third-party notices](THIRD_PARTY_NOTICES.txt) for bundled dependencies.
+Supports **Azure DevOps Services**, one project and team at a time, and the standard **Agile** Epic → Feature → User Story → Task hierarchy. Scrum, Basic, and custom work item types are not supported.
+
+The extension requests read-only Work Item and project access. It does not modify Work Items, require a PAT, persist Work Item data or tokens, send work data to an external backend, or collect telemetry.
+
+For help, [report an issue](https://github.com/mm-lab-dev/azdo-sprint-timeline/issues). See the [changelog](https://github.com/mm-lab-dev/azdo-sprint-timeline/blob/main/CHANGELOG.md) for updates.
+
+Independent project; not affiliated with or endorsed by Microsoft. [MIT License](https://github.com/mm-lab-dev/azdo-sprint-timeline/blob/main/LICENSE).

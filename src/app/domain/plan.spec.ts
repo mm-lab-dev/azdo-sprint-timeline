@@ -8,7 +8,12 @@ import {
   visibleRows,
 } from "./plan";
 import { Filters, GraphResult, Item, Plan, PlanNode } from "./model";
-const filters: Filters = { search: "", state: "", assignee: "", mode: "all" };
+const filters: Filters = {
+  search: "",
+  types: ["Feature", "User Story", "Task"],
+  states: null,
+  assignees: null,
+};
 function graph(start = 1, end = 3): GraphResult {
   return {
     items,
@@ -31,6 +36,44 @@ function find(plan: Plan, id: number): PlanNode {
   throw new Error(`Missing ${id}`);
 }
 describe("受け入れ条件: Sprint期間集約", () => {
+  test("Featureより上のEpicを除外し、各Featureを警告なしのルートにする", () => {
+    const data = items.map((i) =>
+      i.type === "Feature" ? { ...i, parentId: 900 } : i,
+    );
+    data.push({
+      ...items[0],
+      id: 900,
+      type: "Epic",
+      parentId: 999,
+      iterationPath: sprints[5].path,
+    });
+    const plan = buildPlan(
+      { items: data, seedIds: [201, 202, 302], warnings: [] },
+      sprints,
+      [1, 3],
+    );
+    expect(plan.roots.map((n) => n.item.id).sort()).toEqual([1, 2]);
+    expect(plan.roots.every((n) => !n.orphan)).toBe(true);
+    expect(plan.warnings).toEqual([]);
+    expect(plan.hierarchyWarnings).toEqual([]);
+    expect(() => find(plan, 900)).toThrow();
+    expect(find(plan, 101).interval).toEqual([1, 2]);
+    expect(find(plan, 2).interval).toEqual([2, 3]);
+  });
+  test("Featureの親が未取得でも表示範囲外なので警告しない", () => {
+    const data = items.map((i) =>
+      i.type === "Feature" ? { ...i, parentId: 999 } : i,
+    );
+    const plan = buildPlan(
+      { items: data, seedIds: [202], warnings: [] },
+      sprints,
+      [2, 2],
+    );
+    expect(plan.roots.map((n) => n.item.id)).toEqual([1]);
+    expect(plan.warnings).toEqual([]);
+    expect(plan.roots[0].orphan).toBe(false);
+    expect(find(plan, 101).interval).toEqual([1, 2]);
+  });
   test("A01 TaskのSprintがUS自身のSprintを越えて集約される", () => {
     const p = buildPlan(graph(), sprints, [1, 3]);
     expect(find(p, 101).interval).toEqual([1, 2]);
@@ -73,14 +116,16 @@ describe("受け入れ条件: Sprint期間集約", () => {
     const before = JSON.stringify(p);
     const expanded = new Set(items.map((i) => i.id));
     expect(
-      visibleRows(p, { ...filters, mode: "stories" }, expanded).every(
+      visibleRows(p, { ...filters, types: ["User Story"] }, expanded).every(
         (r) => r.node.item.type === "User Story",
       ),
     ).toBe(true);
     expect(
-      visibleRows(p, { ...filters, mode: "noTasks" }, expanded).some(
-        (r) => r.node.item.type === "Task",
-      ),
+      visibleRows(
+        p,
+        { ...filters, types: ["Feature", "User Story"] },
+        expanded,
+      ).some((r) => r.node.item.type === "Task"),
     ).toBe(false);
     expect(
       visibleRows(p, { ...filters, search: "認証API" }, new Set()).map(
@@ -90,7 +135,7 @@ describe("受け入れ条件: Sprint期間集約", () => {
     expect(
       visibleRows(
         p,
-        { ...filters, assignee: "Ren", state: "Closed" },
+        { ...filters, assignees: ["Ren"], states: ["Closed"] },
         new Set(),
       ).map((r) => r.node.item.id),
     ).toEqual([1, 102, 205]);
@@ -111,7 +156,7 @@ describe("受け入れ条件: Sprint期間集約", () => {
     const base = items.find((i) => i.id === 101)!;
     const malformed: Item[] = [
       { ...base, id: 1, parentId: 2 },
-      { ...base, id: 2, parentId: 1, type: "Epic" },
+      { ...base, id: 2, parentId: 1, type: "Custom Type" },
       { ...base, id: 3, parentId: 999 },
       { ...base, id: 3, parentId: 999 },
     ];
@@ -120,7 +165,8 @@ describe("受け入れ条件: Sprint期間集約", () => {
       sprints,
       [1, 3],
     );
-    expect(visibleRows(p, filters, new Set([1, 2, 3]))).toHaveLength(3);
+    expect(visibleRows(p, filters, new Set([1, 2, 3]))).toHaveLength(2);
+    expect(find(p, 2)).toBeDefined();
     expect(p.warnings.join(" ")).toMatch(/循環/);
     expect(p.warnings.join(" ")).toMatch(/親未取得/);
     expect(p.warnings.join(" ")).toMatch(/対象外/);

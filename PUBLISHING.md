@@ -1,4 +1,4 @@
-# 0.1.1 public release preparation
+# 0.2.0 public release preparation
 
 Extension ID: `azdo-sprint-timeline`. Display name: **Sprint Timeline**. Publisher: `mm-lab`.
 
@@ -12,9 +12,9 @@ The manifest is prepared for a public Marketplace listing (`public:true`). No re
 npm run package:vsix
 ```
 
-This generates `artifacts/mm-lab.azdo-sprint-timeline-0.1.1.vsix`. The default publisher is taken from the manifest. Use `AZDO_PUBLISHER` only when building for a different authorized publisher.
+This generates `artifacts/mm-lab.azdo-sprint-timeline-0.2.0.vsix`. The default publisher is taken from the manifest. Use `AZDO_PUBLISHER` only when building for a different authorized publisher.
 
-Review the README, listing images, icon, MIT license, third-party notices, and [verification record](TESTING.md). The package contains production web assets and listing documentation. Tests, fixtures, dependency directories, caches, credentials, customer organization names, and local absolute paths are excluded.
+Review the README, listing images, icon, MIT license, third-party notices, and [verification record](TESTING.md). The package contains production web assets and listing documentation. Tests, fixtures, dependency directories, caches, credentials, customer organization names, and local absolute paths are excluded. README images use absolute public GitHub URLs; push the updated screenshots to `main` before uploading the VSIX so the listing shows the matching UI.
 
 Regenerate the icon and screenshots with synthetic data:
 
@@ -31,14 +31,14 @@ npm run assets:listing
 3. Confirm the public listing settings and complete any Marketplace validation or additional review.
 4. Once available, an authorized administrator can install the extension into their Azure DevOps organization from the public listing.
 
-No recipient organization or private sharing step is needed. The previous 403 indicates that the publishing identity's permissions need to be resolved before upload. Publisher access is managed separately from an organization's extension-installation permissions.
+No recipient organization or private sharing step is needed. Publisher access is managed separately from an organization's extension-installation permissions.
 
 An optional CLI alternative, when publishing has been explicitly authorized:
 
 ```powershell
 npx tfx extension publish `
   --publisher mm-lab `
-  --vsix artifacts/mm-lab.azdo-sprint-timeline-0.1.1.vsix `
+  --vsix artifacts/mm-lab.azdo-sprint-timeline-0.2.0.vsix `
   --auth-type pat
 ```
 

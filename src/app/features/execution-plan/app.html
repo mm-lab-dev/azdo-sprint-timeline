@@ -50,21 +50,29 @@
     </button>
   </section>
   <section class="filterbar" aria-label="表示設定">
-    <label
-      >表示<select
-        aria-label="表示"
-        [ngModel]="filters().mode"
-        (ngModelChange)="updateFilter('mode', $event)"
-      >
-        <option value="all">Feature / US / Task</option>
-        <option value="noTasks">Task非表示</option>
-        <option value="stories">USのみ</option>
-      </select></label
-    >
-    <button (click)="expandAll()" [disabled]="loading()">すべて展開</button
-    ><button (click)="collapseAll()" [disabled]="loading()">
-      すべて折りたたむ
-    </button>
+    <fieldset class="type-picker" aria-label="表示する種類">
+      <legend>表示するWork Item</legend>
+      <div class="type-options">
+        @for (option of typeOptions; track option.type) {<label
+          ><input
+            type="checkbox"
+            [attr.aria-label]="'種類 ' + option.label"
+            [checked]="filters().types.includes(option.type)"
+            [disabled]="loading()"
+            (change)="toggleType(option.type)"
+          /><span
+            [class]="'type-dot ' + (option.type === 'User Story' ? 'story' : option.type.toLowerCase())"
+          ></span
+          >{{ option.label }}</label
+        >}
+      </div>
+    </fieldset>
+    <div class="tree-actions">
+      <button (click)="expandAll()" [disabled]="loading()">すべて展開</button
+      ><button (click)="collapseAll()" [disabled]="loading()">
+        すべて折りたたむ
+      </button>
+    </div>
     <label class="search"
       >検索<input
         pInputText
@@ -73,30 +81,43 @@
         [ngModel]="filters().search"
         (ngModelChange)="updateFilter('search', $event)"
     /></label>
-    <label
-      >状態<select
-        aria-label="状態"
-        [ngModel]="filters().state"
-        (ngModelChange)="updateFilter('state', $event)"
-      >
-        <option value="">すべて</option>
-        @for (s of states(); track s) {
-        <option [value]="s">{{ s }}</option>
-        }
-      </select></label
-    >
-    <label
-      >担当者<select
-        aria-label="担当者"
-        [ngModel]="filters().assignee"
-        (ngModelChange)="updateFilter('assignee', $event)"
-      >
-        <option value="">すべて</option>
-        @for (a of assignees(); track a) {
-        <option [value]="a">{{ a }}</option>
-        }
-      </select></label
-    >
+    <details class="multi-filter">
+      <summary>状態 <span>{{ filterCaption('states') }}</span></summary>
+      <fieldset aria-label="状態フィルター">
+        <legend class="sr-only">状態</legend>
+        <div class="filter-actions">
+          <button (click)="updateFilter('states', null)">全選択</button
+          ><button (click)="updateFilter('states', [])">全解除</button>
+        </div>
+        @for (state of states(); track state) {<label
+          ><input
+            type="checkbox"
+            [attr.aria-label]="'状態 ' + state"
+            [checked]="checked('states', state)"
+            (change)="toggleFilter('states', state)"
+          />{{ state }}</label
+        >}
+      </fieldset>
+    </details>
+    <details class="multi-filter">
+      <summary>担当者 <span>{{ filterCaption('assignees') }}</span></summary>
+      <fieldset aria-label="担当者フィルター">
+        <legend class="sr-only">担当者</legend>
+        <div class="filter-actions">
+          <button (click)="updateFilter('assignees', null)">全選択</button
+          ><button (click)="updateFilter('assignees', [])">全解除</button>
+        </div>
+        @for (person of assignees(); track person.id) {<label
+          ><input
+            type="checkbox"
+            [attr.aria-label]="'担当者 ' + person.name"
+            [checked]="checked('assignees', person.id)"
+            (change)="toggleFilter('assignees', person.id)"
+          /><app-assignee-avatar [person]="person" aria-hidden="true" />{{
+          person.name }}</label
+        >}
+      </fieldset>
+    </details>
   </section>
   <div class="plan-meta">
     <span
@@ -104,7 +125,8 @@
       rows().length }} 表示行</span
     >
     <div class="legend">
-      <span><i class="feature"></i>Feature</span
+      <span><i class="epic"></i>Epic</span
+      ><span><i class="feature"></i>Feature</span
       ><span><i class="story"></i>User Story</span
       ><span><i class="task"></i>Task</span
       ><span><i class="gap"></i>Taskのない区間</span>
@@ -114,7 +136,11 @@
     選択範囲の実行計画です。範囲外の子Taskは取得・集約しません。← →
     は既知の範囲外への継続を示します。
   </p>
-  @if (hasFilters()) {
+  @if (hasPartialEffort()) {
+  <p class="scope-note">
+    完了率の * は、工数が未設定の項目を除いた参考値です。
+  </p>
+  } @if (hasFilters()) {
   <p class="scope-note">
     一致項目と祖先を表示中。非表示の子に由来する集約期間も維持しています。
   </p>
@@ -134,13 +160,39 @@
     </p>
     <button (click)="initialize()">チーム一覧を再取得</button>
   </div>
-  } @else { @if (warnings().length) {
+  } @else { @if (settingsWarnings().length) {
+  <details class="scope-note">
+    <summary>表示するSprintについて</summary>
+    <ul>
+      @for (w of settingsWarnings(); track $index) {
+      <li>{{ w }}</li>
+      }
+    </ul>
+  </details>
+  } @if (retrievalWarnings().length) {
   <aside class="warning" role="status">
-    <strong>部分取得・データ警告（{{ warnings().length }}件）</strong>
+    <strong
+      >一部の項目を取得できませんでした（{{ retrievalWarnings().length
+      }}件）</strong
+    >
     <details>
       <summary>詳細を表示</summary>
       <ul>
-        @for (w of warnings(); track $index) {
+        @for (w of retrievalWarnings(); track $index) {
+        <li>{{ w }}</li>
+        }
+      </ul>
+    </details>
+  </aside>
+  } @if (hierarchyWarnings().length) {
+  <aside class="warning" role="status">
+    <strong
+      >階層を確認してください（{{ hierarchyWarnings().length }}件）</strong
+    >
+    <details>
+      <summary>詳細を表示</summary>
+      <ul>
+        @for (w of hierarchyWarnings(); track $index) {
         <li>{{ w }}</li>
         }
       </ul>
@@ -185,8 +237,7 @@
         </div>
         }
       </div>
-      @for (row of rows(); track row.node.item.id) { @if (row.orphanGroupStart)
-      {
+      @for (row of rows(); track row.key) { @if (row.orphanGroupStart) {
       <div role="row" class="orphan-group">
         <div role="cell">親未取得グループ — 参照できる項目を保持しています</div>
       </div>
@@ -195,52 +246,84 @@
         role="row"
         class="timeline-row"
         [attr.data-item-id]="row.node.item.id"
+        [attr.data-member-ids]="memberIds(row)"
         [style.grid-template-columns]="grid()"
       >
         <div
           role="cell"
           class="item-cell"
           [style.padding-left.px]="12 + row.depth * 20"
-          [title]="tooltip(row.node)"
+          [title]="rowTooltip(row)"
         >
           @if (row.hasChildren) {<button
             class="toggle"
-            [attr.aria-label]="(expanded().has(row.node.item.id) ? '折りたたむ #' : '展開 #') + row.node.item.id"
-            [attr.aria-expanded]="expanded().has(row.node.item.id) || hasFilters()"
-            (click)="toggle(row.node.item.id)"
+            [attr.aria-label]="(isExpanded(row) ? '折りたたむ #' : '展開 #') + row.node.item.id"
+            [attr.aria-expanded]="isExpanded(row) || hasFilters()"
+            (click)="toggle(row)"
           >
-            {{ expanded().has(row.node.item.id) || hasFilters() ? '▾' : '▸' }}</button
+            {{ isExpanded(row) || hasFilters() ? '▾' : '▸' }}</button
           >} @else {<span class="toggle-spacer"></span>}
           <span
             class="type-mark"
             [class]="'type-mark ' + kind(row.node)"
             [title]="row.node.item.type"
-            >{{ kind(row.node) === 'feature' ? 'F' : kind(row.node) === 'story'
-            ? 'U' : 'T' }}</span
+            >{{ kind(row.node) === 'epic' ? 'E' : kind(row.node) === 'feature' ?
+            'F' : kind(row.node) === 'story' ? 'U' : 'T' }}</span
           >
-          <button class="item-link" (click)="open(row.node.item.id)">
-            <small>#{{ row.node.item.id }}</small
+          <button class="item-link" (click)="openMembers(row.members)">
+            <small>{{ rowIds(row) }}</small
             ><span>{{ row.node.item.title }}</span>
           </button>
-          <span class="item-state">{{ row.node.item.state }}</span>@if
-          (row.node.orphan) {<span class="orphan">親未取得</span>}
+          <span class="group-count"
+            >@if (row.members.length > 1) {{{ row.members.length }}件}</span
+          ><span class="item-states"
+            >@for (state of rowStates(row); track state) {<span
+              class="item-state"
+              [class.state-active]="activeState(state)"
+              [class.state-closed]="closedState(state)"
+              >{{ state }}</span
+            >}</span
+          >@if (row.node.orphan) {<span class="orphan">親未取得</span>}
         </div>
         @for (s of selectedSprints(); track s.id; let i = $index) {
         <div role="cell" class="sprint-cell" [class.current]="current(s)">
-          @if (occupied(row.node, range()[0] + i)) {
+          @let members = cellMembers(row, range()[0] + i); @if (members.length)
+          { @let people = cellAssignees(members); @let p = progress(members);
           <button
             [class]="'bar ' + kind(row.node)"
-            [class.gap]="gap(row.node, range()[0] + i)"
-            [class.bar-start]="row.node.visibleInterval?.[0] === range()[0] + i"
-            [class.bar-end]="row.node.visibleInterval?.[1] === range()[0] + i"
-            [attr.aria-label]="'#' + row.node.item.id + ' ' + s.name + (gap(row.node, range()[0] + i) ? ' Taskなし' : ' 計画あり')"
-            [title]="tooltip(row.node)"
-            (click)="open(row.node.item.id)"
+            [attr.data-progress]="p.percent"
+            [class.gap]="gap(row, range()[0] + i)"
+            [class.bar-start]="!occupied(row, range()[0] + i - 1)"
+            [class.bar-end]="!occupied(row, range()[0] + i + 1)"
+            [attr.aria-label]="ids(members) + ' ' + s.name + (gap(row, range()[0] + i) ? ' Taskなし' : ' 計画あり') + (p.percent !== null ? ' 完了率 ' + p.label : '')"
+            [title]="rowTooltip(row) + '\n' + progressTitle(members)"
+            (click)="openMembers(members)"
           >
-            @if (i === 0 && row.node.interval && row.node.interval[0] <
-            range()[0]) {<span>←</span>} @if (i === selectedSprints().length - 1
-            && row.node.interval && row.node.interval[1] > range()[1])
-            {<span>→</span>}
+            @if (p.percent !== null) {<span
+              class="progress-fill"
+              aria-hidden="true"
+              [style.width.%]="p.fill"
+            ></span
+            >} @if (i === 0 && continuesBefore(members)) {<span
+              class="continuation"
+              >←</span
+            >}
+            <span class="bar-assignees"
+              >@for (person of people.slice(0, 3); track person.id)
+              {<app-assignee-avatar [person]="person" />}@if (people.length > 3)
+              {<span
+                class="avatar-overflow"
+                [title]="people.length + '人の担当者'"
+                >+{{ people.length - 3 }}</span
+              >}</span
+            >
+            @if (p.percent !== null) {<span
+              class="progress-value"
+              [class.outside]="p.outside"
+              [title]="progressTitle(members)"
+              >{{ p.label }}@if (p.partial) {*}</span
+            >} @if (i === selectedSprints().length - 1 &&
+            continuesAfter(members)) {<span class="continuation">→</span>}
             <span class="sr-only">{{ row.node.item.type }}</span>
           </button>
           }
@@ -251,8 +334,30 @@
     </div>
   </div>
   } }
+  <dialog #itemDialog aria-label="Work Itemを選択">
+    <div class="dialog-heading">
+      <h2>Work Itemを選択</h2>
+      <button (click)="itemDialog.close()" aria-label="閉じる">×</button>
+    </div>
+    <p>この行にまとめた項目</p>
+    <ul>
+      @for (member of itemChoices(); track member.item.id) {
+      <li>
+        <button (click)="chooseItem(member.item.id)">
+          <app-assignee-avatar [person]="personOf(member)" /><span
+            ><strong>#{{ member.item.id }} {{ member.item.title }}</strong
+            ><small
+              >{{ member.item.state }} · {{ member.item.assignedTo || '未割当'
+              }} · {{ member.item.iterationPath }}</small
+            ></span
+          >
+        </button>
+      </li>
+      }
+    </ul>
+  </dialog>
   <footer>
-    閲覧専用 <span>·</span> Feature → User Story → Task
+    閲覧専用 <span>·</span> 選択した種類で階層表示
     <span>·</span> バーまたはIDを選択してWork Itemを開く
   </footer>
 </main>

@@ -7,6 +7,7 @@ import {
   Area,
   GraphResult,
   Item,
+  PlanOptions,
   Sprint,
   Team,
   TeamSettings,
@@ -51,6 +52,13 @@ export function parentId(raw: WorkItem): number | undefined {
 export function mapItem(raw: WorkItem): Item {
   const f = raw.fields || {};
   const person: unknown = f["System.AssignedTo"];
+  const identity =
+    person && typeof person === "object"
+      ? (person as Record<string, unknown>)
+      : undefined;
+  const links = identity?.["_links"] as
+    { avatar?: { href?: unknown } } | undefined;
+  const imageUrl = identity?.["imageUrl"] || links?.avatar?.href;
   const assignedTo =
     typeof person === "string"
       ? person
@@ -67,6 +75,24 @@ export function mapItem(raw: WorkItem): Item {
     areaPath: String(f["System.AreaPath"] || ""),
     parentId: parentId(raw),
     assignedTo,
+    assignedToId:
+      typeof identity?.["id"] === "string"
+        ? identity["id"]
+        : typeof identity?.["descriptor"] === "string"
+          ? identity["descriptor"]
+          : undefined,
+    assignedToAvatar:
+      typeof imageUrl === "string" && /^https:\/\//i.test(imageUrl)
+        ? imageUrl
+        : undefined,
+    remainingWork:
+      typeof f["Microsoft.VSTS.Scheduling.RemainingWork"] === "number"
+        ? f["Microsoft.VSTS.Scheduling.RemainingWork"]
+        : undefined,
+    originalEstimate:
+      typeof f["Microsoft.VSTS.Scheduling.OriginalEstimate"] === "number"
+        ? f["Microsoft.VSTS.Scheduling.OriginalEstimate"]
+        : undefined,
   };
 }
 export class AzureRepository implements PlanRepository {
@@ -128,7 +154,13 @@ export class AzureRepository implements PlanRepository {
     this.cachedSettings.set(teamId, settings);
     return settings;
   }
-  async load(teamId: string, selected: Sprint[]): Promise<GraphResult> {
+  async load(
+    teamId: string,
+    selected: Sprint[],
+    options: PlanOptions = {},
+  ): Promise<GraphResult> {
+    const isBoundary = (item: Item) =>
+      item.type === (options.includeEpics ? "Epic" : "Feature");
     const settings =
       this.cachedSettings.get(teamId) || (await this.settings(teamId));
     const warnings: string[] = [];
@@ -219,13 +251,20 @@ export class AzureRepository implements PlanRepository {
       const parents = [
         ...new Set(
           [...fetched.values()].flatMap((i) =>
-            i.parentId && !attempted.has(i.parentId) ? [i.parentId] : [],
+            !isBoundary(i) && i.parentId && !attempted.has(i.parentId)
+              ? [i.parentId]
+              : [],
           ),
         ),
       ];
       if (!parents.length) break;
       await fetchIds(parents);
-      if (depth === 63)
+      if (
+        depth === 63 &&
+        [...fetched.values()].some(
+          (i) => !isBoundary(i) && i.parentId && !attempted.has(i.parentId),
+        )
+      )
         warnings.push(
           "祖先探索の深さ上限64に到達しました。未取得の親があります。",
         );

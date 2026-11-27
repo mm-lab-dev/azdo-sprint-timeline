@@ -84,6 +84,95 @@ function fixture(seedCount = 201) {
   return { repository, request, requests };
 }
 describe("Azure DevOps読み取り専用repository", () => {
+  test("標準のRemaining WorkとOriginal Estimateを数値として保持する", () => {
+    const item = raw(1);
+    item.fields["Microsoft.VSTS.Scheduling.OriginalEstimate"] = 10;
+    item.fields["Microsoft.VSTS.Scheduling.RemainingWork"] = -2;
+    expect(mapItem(item)).toMatchObject({
+      originalEstimate: 10,
+      remainingWork: -2,
+    });
+    item.fields["Microsoft.VSTS.Scheduling.OriginalEstimate"] = null;
+    expect(mapItem(item).originalEstimate).toBeUndefined();
+  });
+  test("Epic選択時だけFeature上位を取得し、Epicより上は辿らない", async () => {
+    const f = fixture(1);
+    const original = f.request.getMockImplementation()!;
+    f.request.mockImplementation(async (path, body) => {
+      if (path.endsWith("/workitemsbatch")) {
+        const ids = (body as { ids: number[] }).ids;
+        if (ids.includes(9002)) return { value: [raw(9002, "Feature", 9003)] };
+        if (ids.includes(9003)) return { value: [raw(9003, "Epic", 9004)] };
+        if (ids.includes(9004)) throw new Error("Above display boundary");
+      }
+      return original(path, body);
+    });
+    const result = await f.repository.load("team", [sprints[2]], {
+      includeEpics: true,
+    });
+    expect(result.items.map((i) => i.id)).toEqual([1, 9001, 9002, 9003]);
+    expect(result.warnings).toEqual([]);
+  });
+  test("担当者のID・画像URLを保持し、不正スキームは取り込まない", () => {
+    const item = raw(1);
+    item.fields["System.AssignedTo"] = {
+      id: "person-a",
+      displayName: "Aki",
+      imageUrl: "https://avatar.example.test/aki.png",
+    };
+    expect(mapItem(item)).toMatchObject({
+      assignedToId: "person-a",
+      assignedTo: "Aki",
+      assignedToAvatar: "https://avatar.example.test/aki.png",
+    });
+    item.fields["System.AssignedTo"] = {
+      displayName: "Aki",
+      _links: { avatar: { href: "https://avatar.example.test/link.png" } },
+    };
+    expect(mapItem(item).assignedToAvatar).toBe(
+      "https://avatar.example.test/link.png",
+    );
+    item.fields["System.AssignedTo"] = {
+      displayName: "Aki",
+      imageUrl: "javascript:invalid",
+    };
+    expect(mapItem(item).assignedToAvatar).toBeUndefined();
+  });
+  test("Featureで祖先取得を止め、上位Epicの権限エラーも発生させない", async () => {
+    const f = fixture(1);
+    const original = f.request.getMockImplementation()!;
+    f.request.mockImplementation(async (path, body) => {
+      if (path.endsWith("/workitemsbatch")) {
+        const ids = (body as { ids: number[] }).ids;
+        if (ids.includes(9003)) throw { status: 403 };
+        if (ids.includes(9002)) return { value: [raw(9002, "Feature", 9003)] };
+      }
+      return original(path, body);
+    });
+    const result = await f.repository.load("team", [sprints[2]]);
+    expect(result.items.map((i) => i.id)).toEqual([1, 9001, 9002]);
+    expect(result.warnings).toEqual([]);
+    const requestedIds = f.request.mock.calls
+      .filter(([path]) => path.endsWith("/workitemsbatch"))
+      .flatMap(([, body]) => (body as { ids: number[] }).ids);
+    expect(requestedIds).not.toContain(9003);
+  });
+  test("Featureに到達しない想定外階層でもTaskと取得できる親を保持", async () => {
+    const f = fixture(1);
+    const original = f.request.getMockImplementation()!;
+    f.request.mockImplementation(async (path, body) => {
+      if (path.endsWith("/workitemsbatch"))
+        return {
+          value: (body as { ids: number[] }).ids.map((id) =>
+            id === 1 ? raw(1, "Task", 99) : raw(99, "Epic"),
+          ),
+        };
+      return original(path, body);
+    });
+    const result = await f.repository.load("team", [sprints[2]]);
+    expect(result.seedIds).toEqual([1]);
+    expect(result.items.map((i) => i.id)).toEqual([1, 99]);
+  });
   test("REST JSON envelopeからHTTP・repositoryを通して計画データを取得", async () => {
     const f = fixture(1);
     const fetcher = jest.fn(

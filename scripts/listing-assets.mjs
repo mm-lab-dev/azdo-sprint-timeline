@@ -1,5 +1,6 @@
 import { mkdirSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
+import { URL } from "node:url";
 process.env.PLAYWRIGHT_BROWSERS_PATH = resolve(".cache/ms-playwright");
 process.env.TEMP = resolve(".cache/tmp");
 process.env.TMP = process.env.TEMP;
@@ -24,10 +25,17 @@ try {
     deviceScaleFactor: 1,
     colorScheme: "light",
   });
-  await page.goto(process.env.LISTING_BASE_URL || "http://127.0.0.1:4200");
+  await page.goto(
+    new URL(
+      "?scenario=epic",
+      process.env.LISTING_BASE_URL || "http://127.0.0.1:4200",
+    ).href,
+  );
   await page.getByRole("table").waitFor();
   await page.getByLabel("開始 Sprint", { exact: true }).selectOption("1");
   await page.getByLabel("終了 Sprint", { exact: true }).selectOption("3");
+  await page.getByRole("checkbox", { name: "種類 Epic", exact: true }).check();
+  await page.locator('[data-item-id="900"]').waitFor();
   await page.getByRole("table").waitFor();
   await page.getByRole("button", { name: "すべて展開", exact: true }).click();
   await page.locator('[data-item-id="205"]').waitFor();
@@ -35,9 +43,14 @@ try {
   await page.screenshot({
     path: "resources/readme/overview.png",
     fullPage: true,
+    animations: "disabled",
   });
   await page.emulateMedia({ colorScheme: "dark" });
-  await page.screenshot({ path: "resources/readme/dark.png", fullPage: true });
+  await page.screenshot({
+    path: "resources/readme/dark.png",
+    fullPage: true,
+    animations: "disabled",
+  });
 } finally {
   await browser.close();
 }

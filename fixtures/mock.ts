@@ -63,12 +63,17 @@ const item = (
   state,
   parentId,
   assignedTo,
+  assignedToAvatar: ["Aki", "Ren", "Mina"].includes(assignedTo)
+    ? `assets/avatars/${assignedTo.toLowerCase()}.svg`
+    : undefined,
   iterationPath: sprint === null ? "Demo" : `Demo\\Sprint ${sprint}`,
   areaPath,
   project: "Demo",
+  originalEstimate: type === "Task" ? 8 : undefined,
+  remainingWork: type === "Task" ? (state === "Closed" ? 0 : 4) : undefined,
 });
 export const items: Item[] = [
-  item(1, "Feature", "認証基盤の刷新", null),
+  item(1, "Feature", "認証基盤の刷新", null, 900),
   item(101, "User Story", "安全にサインインする", 1, 1),
   item(201, "Task", "認証フローの設計", 1, 101),
   item(202, "Task", "認証APIの実装", 2, 101, "Ren"),
@@ -77,7 +82,7 @@ export const items: Item[] = [
   item(204, "Task", "トークン更新", 1, 102),
   item(205, "Task", "セキュリティ検証", 3, 102, "Ren", "Closed"),
   item(103, "User Story", "未計画の兄弟Story", null, 1),
-  item(2, "Feature", "運用体験を整える", 0),
+  item(2, "Feature", "運用体験を整える", 0, 900),
   item(104, "User Story", "監査ログを確認する", 2, 2, "Mina"),
   item(105, "User Story", "運用手順を整備する", 0, 2, "Mina"),
   item(206, "Task", "運用ガイドの執筆", 3, 105, "Mina"),
@@ -102,4 +107,5 @@ export const items: Item[] = [
     "Active",
     "Demo\\Platform\\Operations",
   ),
+  item(900, "Epic", "プラットフォーム改善", null),
 ];

@@ -1,5 +1,11 @@
 # 決定記録
 
+- 既定ではFeatureを上端とし、Epicのチェック時だけEpicまで祖先を取得・集約する。選択したEpic/Feature/US/Taskだけで表示ツリーを投影し、非選択の中間階層を飛ばす。表示選択・折りたたみ・フィルターは元の期間集約を変えない。取得漏れと階層の注意を別表示にし、表示範囲外のSprint設定は情報として扱う。
+- 同じ種類・同じ実際の親・完全一致タイトルの項目だけを表示行として統合する。親なし同士も対象。表示上の親が同じになっても元の親が異なる項目は統合しない。元ID・担当者・状態・Sprint・期間は保持し、統合行やセルから各IDへ遷移できるようにする。
+- 状態・担当者はチェックボックスの複数選択。同じフィルター内はOR、種類の異なるフィルター間はAND。nullは全選択、空配列は全解除とし、未割当担当者も選択可能。担当者の識別はIDを優先し、画像が取れなければ頭文字を表示する。
+- 斜線は取得したTaskがないSprintを示す。Taskが一つもないUSも、自身のSprintに斜線で表示する。親・統合行も同じ基準とし、表示階層の省略で判定を変えない。
+- 完了率はユーザー指定の `(Original − Remaining) / Original × 100`。標準フィールド`Microsoft.VSTS.Scheduling.OriginalEstimate`と`Microsoft.VSTS.Scheduling.RemainingWork`を使用する。親と統合行は工数を加算し、割合の単純平均や親の二重計上はしない。負値・100%超は数値を維持し、描画だけをバー内に収める。見積未設定・0なら割合を表示せず、不足項目を除いた参考値には*を付す。％はバーの端に小さな文字で添える。
+
 - 0.1.1: ブラウザーの標準fetchはクライアントオブジェクトをthisとして呼び出すと`Illegal invocation`になるため、`globalThis.fetch`を呼ぶラッパーで保持する。Node/モックのみでは検出できなかったため、実SDKのiframe起動から標準fetch・Team選択まで通すE2Eを追加。チーム一覧0件はWork Itemの空結果と区別し、更新で一覧取得から再試行する。
 
 - 公開用構成は`3mf-gcode-preview`を参考に、画像付きREADME・CHANGELOG・SUPPORT・TESTING・PUBLISHING・MITライセンス・第三者表記へ分離。拡張ID/npm名/Angularプロジェクト名/配布パスはユーザー指定の`azdo-sprint-timeline`に統一。表示名はユーザー指定のSprint Timelineに更新。

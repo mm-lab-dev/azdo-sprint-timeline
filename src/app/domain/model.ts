@@ -23,8 +23,28 @@ export interface Item {
   project: string;
   parentId?: number;
   assignedTo?: string;
+  assignedToId?: string;
+  assignedToAvatar?: string;
+  remainingWork?: number;
+  originalEstimate?: number;
+}
+export const workItemTypes = ["Epic", "Feature", "User Story", "Task"] as const;
+export type WorkItemType = (typeof workItemTypes)[number];
+export interface PlanOptions {
+  includeEpics?: boolean;
+}
+export interface Assignee {
+  id: string;
+  name: string;
+  imageUrl?: string;
 }
 export type Interval = [number, number];
+export interface Effort {
+  remaining: number;
+  original: number;
+  estimatedCount: number;
+  missingCount: number;
+}
 export interface PlanNode {
   item: Item;
   children: PlanNode[];
@@ -33,10 +53,12 @@ export interface PlanNode {
   interval: Interval | null;
   visibleInterval: Interval | null;
   orphan: boolean;
+  effort: Effort;
 }
 export interface Plan {
   roots: PlanNode[];
   warnings: string[];
+  hierarchyWarnings: string[];
 }
 export interface GraphResult {
   items: Item[];
@@ -50,12 +72,14 @@ export interface TeamSettings {
 }
 export interface Filters {
   search: string;
-  state: string;
-  assignee: string;
-  mode: "all" | "stories" | "noTasks";
+  types: WorkItemType[];
+  states: string[] | null;
+  assignees: string[] | null;
 }
 export interface Row {
+  key: string;
   node: PlanNode;
+  members: PlanNode[];
   depth: number;
   hasChildren: boolean;
   orphanGroupStart?: boolean;

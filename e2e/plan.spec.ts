@@ -1,5 +1,67 @@
-import { expect, test } from "@playwright/test";
+import { expect, Page, test } from "@playwright/test";
 import { mkdirSync, writeFileSync } from "node:fs";
+async function selectFilter(
+  page: Page,
+  kind: "状態" | "担当者",
+  values: string[] | null,
+) {
+  const panel = page
+    .locator("details.multi-filter")
+    .nth(kind === "状態" ? 0 : 1);
+  if ((await panel.getAttribute("open")) === null)
+    await panel.locator("summary").click();
+  await panel
+    .getByRole("button", {
+      name: values === null ? "全選択" : "全解除",
+      exact: true,
+    })
+    .click();
+  if (values)
+    for (const value of values) {
+      await expect(
+        panel.getByRole("checkbox", { name: kind + " " + value, exact: true }),
+      ).not.toBeChecked();
+      await panel
+        .getByRole("checkbox", { name: kind + " " + value, exact: true })
+        .check();
+    }
+  await panel.locator("summary").click();
+}
+
+test("Featureより上のEpicは表示せず、通常の階層を警告しない", async ({
+  page,
+}) => {
+  await page.goto("/?scenario=epic");
+  await expect(page.getByRole("table")).toBeVisible();
+  await page.getByLabel("開始 Sprint", { exact: true }).selectOption("1");
+  await page.getByLabel("終了 Sprint", { exact: true }).selectOption("3");
+  await page.getByRole("button", { name: "すべて展開", exact: true }).click();
+  await expect(page.locator('[data-item-id="1"]')).toBeVisible();
+  await expect(page.locator('[data-item-id="2"]')).toBeVisible();
+  await expect(page.locator('[data-item-id="101"] .bar')).toHaveCount(2);
+  await expect(page.locator('[data-item-id="202"]')).toBeVisible();
+  await expect(page.locator('[data-item-id="900"]')).toHaveCount(0);
+  await expect(page.locator(".warning")).toHaveCount(0);
+});
+test("取得漏れと階層の注意を分け、取得できる項目は表示する", async ({
+  page,
+}) => {
+  await page.goto("/?scenario=partial");
+  await expect(page.getByRole("table")).toBeVisible();
+  await expect(
+    page
+      .locator(".warning strong")
+      .filter({ hasText: "一部の項目を取得できませんでした" }),
+  ).toHaveCount(1);
+  await expect(
+    page
+      .locator(".warning strong")
+      .filter({ hasText: "階層を確認してください" }),
+  ).toHaveCount(1);
+  await page.getByRole("button", { name: "すべて展開", exact: true }).click();
+  await expect(page.locator('[data-item-id="106"]')).toBeVisible();
+  await expect(page.locator('[data-item-id="202"]')).toBeVisible();
+});
 test("Sprint等幅軸・階層・期間集約・表示設定・フォーム遷移", async ({
   page,
 }) => {
@@ -24,13 +86,20 @@ test("Sprint等幅軸・階層・期間集約・表示設定・フォーム遷�
     );
   expect(new Set(widths).size).toBe(1);
   expect(widths[0]).toBe(150);
-  await page.getByLabel("表示", { exact: true }).selectOption("noTasks");
+  await page
+    .getByRole("checkbox", { name: "種類 Task", exact: true })
+    .uncheck();
   await expect(page.locator('[data-item-id="201"]')).toHaveCount(0);
   await expect(page.locator('[data-item-id="101"] .bar')).toHaveCount(2);
-  await page.getByLabel("表示", { exact: true }).selectOption("stories");
+  await page
+    .getByRole("checkbox", { name: "種類 Feature", exact: true })
+    .uncheck();
   await expect(page.locator('[data-item-id="1"]')).toHaveCount(0);
   await expect(page.locator('[data-item-id="102"] .bar')).toHaveCount(3);
-  await page.getByLabel("表示", { exact: true }).selectOption("all");
+  await page
+    .getByRole("checkbox", { name: "種類 Feature", exact: true })
+    .check();
+  await page.getByRole("checkbox", { name: "種類 Task", exact: true }).check();
   await page.getByLabel("検索", { exact: true }).fill("認証API");
   await expect(page.locator('[data-item-id="1"]')).toBeVisible();
   await expect(page.locator('[data-item-id="202"]')).toBeVisible();
@@ -95,13 +164,13 @@ test("フィルター・折りたたみ・チーム切替", async ({ page }) => 
     .getByRole("button", { name: "すべて折りたたむ", exact: true })
     .click();
   await expect(page.locator('[data-item-id="101"]')).toHaveCount(0);
-  await page.getByLabel("担当者", { exact: true }).selectOption("Ren");
+  await selectFilter(page, "担当者", ["Ren"]);
   await expect(page.locator('[data-item-id="202"]')).toBeVisible();
   await expect(page.locator('[data-item-id="101"]')).toBeVisible();
-  await page.getByLabel("状態", { exact: true }).selectOption("Closed");
+  await selectFilter(page, "状態", ["Closed"]);
   await expect(page.locator('[data-item-id="205"]')).toBeVisible();
-  await page.getByLabel("担当者", { exact: true }).selectOption("");
-  await page.getByLabel("状態", { exact: true }).selectOption("");
+  await selectFilter(page, "担当者", null);
+  await selectFilter(page, "状態", null);
   await page.getByLabel("Team", { exact: true }).selectOption("beta");
   await expect(page.locator('[data-item-id="301"]')).toBeVisible();
   await expect(page.locator('[data-item-id="101"]')).toHaveCount(0);
@@ -114,7 +183,7 @@ for (const [scenario, text] of [
   ["429", "アクセス集中"],
   ["network", "通信エラー"],
   ["empty", "表示対象がありません"],
-  ["partial", "部分取得・データ警告"],
+  ["partial", "一部の項目を取得できませんでした"],
 ]) {
   test(`状態表示: ${scenario}`, async ({ page }) => {
     await page.goto(`/?scenario=${scenario}`);

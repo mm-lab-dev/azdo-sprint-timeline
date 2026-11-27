@@ -1,6 +1,6 @@
 # Development
 
-Azure BoardsにSprint単位の閲覧専用タイムラインを追加するAzure DevOps Services拡張です。AgileのFeature → User Story → Taskに対応します。
+Azure BoardsにSprint単位の閲覧専用タイムラインを追加するAzure DevOps Services拡張です。AgileのEpic → Feature → User Story → Taskに対応します。
 
 USのIteration Pathだけに依存せず、取得対象の子Taskの所属Sprintを集約します。US自身の有効なSprintも和集合に含め、Feature自身のIterationは使いません。横軸は日・週・月ではなく、すべて等幅のSprint列です。
 
@@ -37,7 +37,7 @@ Angularはラッパースクリプトを通して起動し、一時出力先も`
 - 選択チームのArea（includeChildren対応）と選択Sprintの正確なパスに一致するUS/Taskを起点に、必要な同一プロジェクトの祖先だけ取得します。Closedを除外しません。
 - 子Taskは自身のSprint 1列。USは自身の有効Sprintと取得した子Taskの和集合の最小〜最大。Featureは子から集約します。
 - 範囲外の子Taskは取得しません。祖先US自身の既知の範囲外Sprintはクリップ前の期間に含め、矢印で示します。この表示は「全期間」ではありません。
-- Taskのない中間Sprintは斜線。Taskがない計画済みUSは自身のSprintを表示します。
+- TaskのないSprintは斜線。Taskがない計画済みUSは自身のSprintを斜線で表示します。親・統合行でも取得した子孫Taskの有無で判定します。
 - 表示モード、検索、担当者・状態フィルター、折りたたみは集約期間を変更しません。フィルターは一致項目と祖先を残し、必要な階層を自動展開します。
 - 取得漏れ、欠損親、別プロジェクトの親、循環、対象外階層、上限は警告します。空の成功結果として隠しません。
 

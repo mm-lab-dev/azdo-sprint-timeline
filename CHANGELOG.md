@@ -1,20 +1,21 @@
 # Changelog
 
-## 0.1.1 — Unreleased
+## 0.2.0
 
-- Fix browser-native fetch calls failing with `Illegal invocation` before the Team request was sent.
-- Retry Team discovery when refreshing an empty or failed Team selection.
-- Distinguish an empty Team list from an empty execution plan, and show the failing retrieval stage and HTTP status.
-- Add real-SDK iframe tests using browser-native fetch, including empty-list recovery and permission failures.
+- Choose multiple work item types, including Epic, and skip hidden levels in the tree.
+- Combine same-type items with the same parent and title into one row, keeping access to each original item.
+- Add checkbox filters for states and assignees, avatars, and completion percentages.
+- Align item and state colors with Azure Boards and fix the search field's theme.
+- Hatch bars without Tasks consistently, including Stories with no child Tasks.
+- Show available data with separate retrieval warnings and hierarchy notices.
+- Refresh the user guide and screenshots and fix Marketplace image links.
+
+## 0.1.1
+
+- Fix Team discovery failing before an HTTP request was sent, and allow retrying an empty or failed Team list.
+- Show clearer retrieval errors and empty states.
 
 ## 0.1.0
 
-- Add an Azure Boards hub with equal-width Sprint columns and a Feature / User Story / Task hierarchy.
-- Aggregate execution periods from child Tasks, including Stories whose own Iteration Path is unplanned or outside the selected range.
-- Add range selection, search, state and assignee filters, display modes, and hierarchy controls.
-- Distinguish Sprints without Tasks, known continuation beyond the range, and unavailable parents.
-- Add read-only Azure DevOps integration, a mock preview, automated tests, and local VSIX packaging.
-
-Extension ID: `azdo-sprint-timeline`. Display name: **Sprint Timeline**. Initial organization testing exposed the Team discovery failure fixed in 0.1.1; complete real-organization verification remains pending.
-
-The release package is prepared for a public Marketplace listing without a recipient organization.
+- Add a read-only Azure Boards timeline with equal-width Sprint columns and periods aggregated from child Tasks.
+- Add Sprint selection, search, filters, hierarchy controls, gap indicators, and Work Item navigation.

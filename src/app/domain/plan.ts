@@ -6,9 +6,13 @@ import {
   Item,
   Plan,
   PlanNode,
+  PlanOptions,
+  WorkItemType,
   Row,
   Sprint,
 } from "./model";
+import { assigneeOf } from "./assignee";
+import { aggregateEffort, emptyEffort } from "./effort";
 
 export const day = (value: string): string => value.slice(0, 10);
 export function todayDay(): string {
@@ -77,8 +81,11 @@ export function buildPlan(
   graph: GraphResult,
   sprints: Sprint[],
   range: Interval,
+  options: PlanOptions = {},
 ): Plan {
-  const warnings = [...graph.warnings];
+  const isBoundary = (item: Item) =>
+    item.type === (options.includeEpics ? "Epic" : "Feature");
+  const hierarchyWarnings: string[] = [];
   const all = new Map(graph.items.map((i) => [i.id, i]));
   const retained = new Map<number, Item>();
   for (const id of graph.seedIds) {
@@ -89,6 +96,7 @@ export function buildPlan(
       if (seen.has(item.id)) break;
       seen.add(item.id);
       retained.set(item.id, item);
+      if (isBoundary(item)) break;
       item = item.parentId ? all.get(item.parentId) : undefined;
     }
   }
@@ -103,6 +111,7 @@ export function buildPlan(
         interval: null,
         visibleInterval: null,
         orphan: false,
+        effort: emptyEffort(),
       },
     ]),
   );
@@ -116,18 +125,20 @@ export function buildPlan(
     while (cursor !== undefined && nodes.has(cursor) && !done.has(cursor)) {
       if (chain.has(cursor)) {
         broken.add(cursor);
-        warnings.push(`親子循環: #${cursor} の親リンクを切断しました。`);
+        hierarchyWarnings.push(
+          `親子循環: #${cursor} の親リンクを切断しました。`,
+        );
         break;
       }
       chain.add(cursor);
-      cursor = nodes.get(cursor)?.item.parentId;
+      const item: Item | undefined = nodes.get(cursor)?.item;
+      cursor = item && isBoundary(item) ? undefined : item?.parentId;
     }
     chain.forEach((n) => done.add(n));
   }
   for (const node of nodes.values()) {
-    const parent = node.item.parentId
-      ? nodes.get(node.item.parentId)
-      : undefined;
+    const parentId = isBoundary(node.item) ? undefined : node.item.parentId;
+    const parent = parentId ? nodes.get(parentId) : undefined;
     if (
       parent &&
       parent.item.project === node.item.project &&
@@ -135,20 +146,23 @@ export function buildPlan(
     ) {
       parent.children.push(node);
       if (!(
+        (parent.item.type === "Epic" && node.item.type === "Feature") ||
         (parent.item.type === "Feature" && node.item.type === "User Story") ||
         (parent.item.type === "User Story" && node.item.type === "Task")
       ))
-        warnings.push(`想定外の階層: #${parent.item.id} → #${node.item.id}`);
+        hierarchyWarnings.push(
+          `想定外の階層: #${parent.item.id} → #${node.item.id}`,
+        );
     } else {
-      node.orphan = !!node.item.parentId;
+      node.orphan = !!parentId;
       if (node.orphan)
-        warnings.push(
+        hierarchyWarnings.push(
           `親未取得: #${node.item.id}（欠損・権限・別プロジェクト・循環）`,
         );
       roots.push(node);
     }
-    if (!["Feature", "User Story", "Task"].includes(node.item.type))
-      warnings.push(
+    if (!["Epic", "Feature", "User Story", "Task"].includes(node.item.type))
+      hierarchyWarnings.push(
         `対象外タイプを祖先として保持: #${node.item.id} ${node.item.type}`,
       );
   }
@@ -163,9 +177,15 @@ export function buildPlan(
     pending.push(...n.children);
   }
   for (const n of order.reverse()) {
+    n.effort = aggregateEffort(
+      n.item,
+      n.children.map((c) => c.effort),
+    );
     const ownIndex = sprintIndex.get(pathKey(n.item.iterationPath));
     const own =
-      n.item.type !== "Feature" && ownIndex !== undefined ? [ownIndex] : [];
+      !["Feature", "Epic"].includes(n.item.type) && ownIndex !== undefined
+        ? [ownIndex]
+        : [];
     n.activeSprints = union([
       ...own,
       ...n.children.flatMap((c) => c.activeSprints),
@@ -181,7 +201,36 @@ export function buildPlan(
       n.visibleInterval = start <= end ? [start, end] : null;
     }
   }
-  return { roots, warnings: [...new Set(warnings)] };
+  return {
+    roots,
+    warnings: [...new Set([...graph.warnings, ...hierarchyWarnings])],
+    hierarchyWarnings: [...new Set(hierarchyWarnings)],
+  };
+}
+interface DisplayGroup {
+  key: string;
+  members: PlanNode[];
+  children: DisplayGroup[];
+}
+function mergeGroups(groups: DisplayGroup[]): DisplayGroup[] {
+  const merged = new Map<string, DisplayGroup>();
+  for (const group of groups) {
+    const existing = merged.get(group.key);
+    if (existing) {
+      existing.members.push(...group.members);
+      existing.children.push(...group.children);
+    } else
+      merged.set(group.key, {
+        ...group,
+        members: [...group.members],
+        children: [...group.children],
+      });
+  }
+  for (const group of merged.values()) {
+    group.members.sort((a, b) => a.item.id - b.item.id);
+    group.children = mergeGroups(group.children);
+  }
+  return [...merged.values()];
 }
 export function visibleRows(
   plan: Plan,
@@ -190,12 +239,14 @@ export function visibleRows(
 ): Row[] {
   const matches = (n: PlanNode) =>
     (!filters.search ||
-      `${n.item.id} ${n.item.title}`
+      (n.item.id + " " + n.item.title)
         .toLocaleLowerCase()
         .includes(filters.search.toLocaleLowerCase())) &&
-    (!filters.state || n.item.state === filters.state) &&
-    (!filters.assignee || n.item.assignedTo === filters.assignee);
-  const filtering = !!(filters.search || filters.state || filters.assignee);
+    (filters.states === null || filters.states.includes(n.item.state)) &&
+    (filters.assignees === null ||
+      filters.assignees.includes(assigneeOf(n.item).id));
+  const filtering =
+    !!filters.search || filters.states !== null || filters.assignees !== null;
   const keep = new Set<number>();
   const visit = (n: PlanNode): boolean => {
     const child = n.children.map(visit).some(Boolean);
@@ -206,29 +257,38 @@ export function visibleRows(
     return false;
   };
   plan.roots.forEach(visit);
-  const rows: Row[] = [];
-  const walk = (n: PlanNode, depth: number) => {
-    if (!keep.has(n.item.id)) return;
-    const shown =
-      filters.mode === "stories"
-        ? n.item.type === "User Story"
-        : !(filters.mode === "noTasks" && n.item.type === "Task");
-    if (shown)
-      rows.push({
-        node: n,
-        depth: filters.mode === "stories" ? 0 : depth,
-        hasChildren: n.children.some(
-          (c) =>
-            keep.has(c.item.id) &&
-            !(filters.mode === "noTasks" && c.item.type === "Task"),
-        ),
-      });
-    if (!shown || filtering || expanded.has(n.item.id))
-      n.children.forEach((c) => walk(c, depth + (shown ? 1 : 0)));
+  const project = (n: PlanNode): DisplayGroup[] => {
+    if (!keep.has(n.item.id)) return [];
+    const children = n.children.flatMap(project);
+    if (!filters.types.includes(n.item.type as WorkItemType)) return children;
+    const key = JSON.stringify([
+      n.item.project,
+      n.item.type,
+      n.item.parentId ?? null,
+      n.item.title,
+    ]);
+    return [{ key, members: [n], children }];
   };
-  plan.roots.filter((n) => !n.orphan).forEach((n) => walk(n, 0));
+  const roots = mergeGroups(plan.roots.flatMap(project));
+  const rows: Row[] = [];
+  const walk = (group: DisplayGroup, depth: number) => {
+    rows.push({
+      key: group.key,
+      node: group.members[0],
+      members: group.members,
+      depth,
+      hasChildren: group.children.length > 0,
+    });
+    if (filtering || group.members.some((n) => expanded.has(n.item.id)))
+      group.children.forEach((c) => walk(c, depth + 1));
+  };
+  roots
+    .filter((g) => !g.members.some((n) => n.orphan))
+    .forEach((g) => walk(g, 0));
   const orphanStart = rows.length;
-  plan.roots.filter((n) => n.orphan).forEach((n) => walk(n, 0));
+  roots
+    .filter((g) => g.members.some((n) => n.orphan))
+    .forEach((g) => walk(g, 0));
   if (rows[orphanStart]) rows[orphanStart].orphanGroupStart = true;
   return rows;
 }
